@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Controller;
 
 use App\Entity\Order;
@@ -7,12 +8,15 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class AdminOrderController extends AbstractController
 {
     #[Route('/admin/orders', name: 'admin_orders', methods: ['GET'])]
     public function index(EntityManagerInterface $entityManager): Response
     {
+        $this->denyAccessUnlessGranted('ROLE_ADMIN');
+
         $orders = $entityManager
             ->getRepository(Order::class)
             ->findBy([], ['id' => 'DESC']);
@@ -28,6 +32,8 @@ class AdminOrderController extends AbstractController
         Request $request,
         EntityManagerInterface $entityManager
     ): Response {
+        $this->denyAccessUnlessGranted('ROLE_ADMIN');
+
         $order = $entityManager->getRepository(Order::class)->find($id);
 
         if (!$order) {
@@ -65,4 +71,109 @@ class AdminOrderController extends AbstractController
 
         return $this->redirectToRoute('admin_orders');
     }
+
+    #[Route('/admin/orders/{id}/payment-status', name: 'admin_order_payment_status', methods: ['POST'])]
+    public function updatePaymentStatus(
+        int $id,
+        Request $request,
+        EntityManagerInterface $entityManager
+    ): Response {
+        $this->denyAccessUnlessGranted('ROLE_ADMIN');
+
+        $order = $entityManager->getRepository(Order::class)->find($id);
+
+        if (!$order) {
+            throw $this->createNotFoundException('Order not found.');
+        }
+
+        $token = (string) $request->request->get('_token', '');
+
+        if (!$this->isCsrfTokenValid('update_payment_status_' . $id, $token)) {
+            throw $this->createAccessDeniedException('Invalid security token.');
+        }
+
+        $paymentStatus = (string) $request->request->get('paymentStatus', '');
+
+        if (!in_array($paymentStatus, ['Paid', 'Rejected'], true)) {
+            $this->addFlash('error', 'Invalid payment status.');
+            return $this->redirectToRoute('admin_orders');
+        }
+
+        if ($order->getPaymentMethod() === 'COD' && $paymentStatus !== 'Paid') {
+            $this->addFlash('error', 'COD orders can only be marked as Paid.');
+            return $this->redirectToRoute('admin_orders');
+        }
+
+        $order->setPaymentStatus($paymentStatus);
+        $entityManager->flush();
+
+        $this->addFlash(
+            'success',
+            sprintf('Payment for Order #%d marked as %s.', $id, $paymentStatus)
+        );
+
+        return $this->redirectToRoute('admin_orders');
+    }
+
+    #[Route('/admin/orders/{id}/undo-payment', name: 'admin_order_undo_payment', methods: ['POST'])]
+    public function undoPayment(
+        int $id,
+        Request $request,
+        EntityManagerInterface $entityManager
+    ): Response {
+        $this->denyAccessUnlessGranted('ROLE_ADMIN');
+
+        $order = $entityManager->getRepository(Order::class)->find($id);
+
+        if (!$order) {
+            throw $this->createNotFoundException('Order not found.');
+        }
+
+        $token = (string) $request->request->get('_token', '');
+
+        if (!$this->isCsrfTokenValid('undo_payment_' . $id, $token)) {
+            throw $this->createAccessDeniedException('Invalid security token.');
+        }
+
+        if ($order->getPaymentStatus() !== 'Paid') {
+            $this->addFlash('error', 'Only paid orders can be returned to Pending.');
+            return $this->redirectToRoute('admin_orders');
+        }
+
+        $order->setPaymentStatus('Pending');
+        $entityManager->flush();
+
+        $this->addFlash(
+            'success',
+            sprintf('Payment for Order #%d has been returned to Pending.', $id)
+        );
+
+        return $this->redirectToRoute('admin_orders');
+    }
+
+    #[Route('/admin/orders/{id}/payment-receipt', name: 'admin_order_payment_receipt', methods: ['GET'])]
+    public function viewPaymentReceipt(
+        int $id,
+        EntityManagerInterface $entityManager
+    ): Response {
+        $this->denyAccessUnlessGranted('ROLE_ADMIN');
+
+        $order = $entityManager->getRepository(Order::class)->find($id);
+
+        if (!$order || !$order->getPaymentReceipt()) {
+            throw $this->createNotFoundException('Payment receipt not found.');
+        }
+
+        $filename = basename($order->getPaymentReceipt());
+        $receiptPath = $this->getParameter('kernel.project_dir')
+            . '/public/uploads/payment_receipts/'
+            . $filename;
+
+        if (!is_file($receiptPath)) {
+            throw $this->createNotFoundException('Receipt file does not exist.');
+        }
+
+        return new BinaryFileResponse($receiptPath);
+    }
+
 }

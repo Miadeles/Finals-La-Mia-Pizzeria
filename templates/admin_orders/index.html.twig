@@ -1,3 +1,4 @@
+
 {% extends 'base.html.twig' %}
 
 {% block title %}Admin Orders | La Mia Pizzeria{% endblock %}
@@ -49,14 +50,19 @@
             padding-bottom: 12px;
         }
 
-        .status {
-            display: inline-block;
-            padding: 6px 10px;
+       .status {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            min-height: 32px;
+            padding: 6px 14px;
             border-radius: 20px;
             background: #fff0cb;
             color: #292521;
             font-size: 13px;
             font-weight: bold;
+            box-sizing: border-box;
         }
 
         .details {
@@ -87,17 +93,25 @@
 
         .orders-container select,
         .orders-container button {
-            padding: 10px 12px;
-            border-radius: 6px;
-            border: 1px solid #ccc;
+            min-height: 42px;
+            padding: 10px 16px;
+            border-radius: 7px;
             font-size: 14px;
+        }
+
+        .orders-container select {
+            background: #252525;
+            color: #ffffff;
+            border: 1px solid #444;
         }
 
         .orders-container button {
             background: #8b2026;
-            color: white;
-            border: 0;
+            color: #ffffff;
+            border: none;
             cursor: pointer;
+            font-weight: 600;
+            transition: background 0.2s ease;
         }
 
         .orders-container button:hover {
@@ -106,9 +120,48 @@
 
         .orders-container form {
             display: flex;
-            gap: 8px;
+            gap: 10px;
             flex-wrap: wrap;
             align-items: center;
+        }
+
+        .orders-container .order-actions {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin: 18px 0;
+        }
+
+        .orders-container .undo-button {
+            background: #555 !important;
+        }
+
+        .orders-container .undo-button:hover {
+            background: #3f3f3f !important;
+        }
+
+        .orders-container .reject-button {
+            background: #555 !important;
+        }
+
+        .orders-container .reject-button:hover {
+            background: #3f3f3f !important;
+        }
+
+        .orders-container .delivery-actions {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+            padding-top: 16px;
+            border-top: 1px solid #333;
+            margin-top: 20px;
+        }
+
+        .orders-container .delivery-actions label {
+            color: #cccccc;
+            font-weight: 600;
         }
 
         .empty {
@@ -128,7 +181,6 @@
             font-weight: 600;
             margin-bottom: 8px;
         }
-        
     </style>
 {% endblock %}
 
@@ -157,6 +209,7 @@
 
             {% for order in orders %}
                 <section class="order">
+
                     <div class="order-header">
                         <h2>Order #{{ order.id }}</h2>
                         <span class="status">{{ order.status }}</span>
@@ -180,6 +233,7 @@
                     </div>
 
                     <h3 class="order-items-heading">Order Items</h3>
+
                     <ul class="items">
                         {% for item in order.orderItems %}
                             <li>
@@ -194,8 +248,114 @@
                         Total: ₱{{ order.total|number_format(2, '.', ',') }}
                     </p>
 
+                    <hr style="border-color: #333;">
+
+                    <h3>Payment Information</h3>
+
+                    <div class="details">
+                        <div>
+                            <div class="label">Payment Method</div>
+                            <strong>{{ order.paymentMethod }}</strong>
+                        </div>
+
+                        <div>
+                            <div class="label">Payment Status</div>
+                            <span class="status">{{ order.paymentStatus }}</span>
+                        </div>
+
+                        {% if order.paymentMethod != 'COD' %}
+                            <div>
+                                <div class="label">Sender's Account Name</div>
+                                {{ order.paymentAccountName ?: 'Not provided' }}
+                            </div>
+
+                            <div>
+                                <div class="label">Payment Reference Number</div>
+                                {{ order.paymentReferenceNumber ?: 'Not provided' }}
+                            </div>
+
+                            <div>
+                                <div class="label">Payment Receipt</div>
+
+                                {% if order.paymentReceipt %}
+                                    <a href="{{ path('admin_order_payment_receipt', {id: order.id}) }}"
+                                       target="_blank"
+                                       rel="noopener noreferrer"
+                                       style="color: #e6bd70;">
+                                        View Payment Receipt
+                                    </a>
+                                {% else %}
+                                    No receipt uploaded
+                                {% endif %}
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="order-actions">
+
+                        {% if order.paymentMethod != 'COD' and order.paymentStatus == 'Pending' %}
+                            <form method="post"
+                                  action="{{ path('admin_order_payment_status', {id: order.id}) }}">
+
+                                <input type="hidden"
+                                       name="_token"
+                                       value="{{ csrf_token('update_payment_status_' ~ order.id) }}">
+
+                                <button type="submit"
+                                        name="paymentStatus"
+                                        value="Paid"
+                                        onclick="return confirm('Are you sure you want to mark Order #{{ order.id }} as Paid?');">
+                                    Mark as Paid
+                                </button>
+
+                                <button type="submit"
+                                        name="paymentStatus"
+                                        value="Rejected"
+                                        class="reject-button"
+                                        onclick="return confirm('Are you sure you want to reject the payment for Order #{{ order.id }}?');">
+                                    Reject Payment
+                                </button>
+                            </form>
+                        {% endif %}
+
+                        {% if order.paymentMethod == 'COD' and order.paymentStatus == 'Pending' %}
+                            <form method="post"
+                                  action="{{ path('admin_order_payment_status', {id: order.id}) }}">
+
+                                <input type="hidden"
+                                       name="_token"
+                                       value="{{ csrf_token('update_payment_status_' ~ order.id) }}">
+
+                                <button type="submit"
+                                        name="paymentStatus"
+                                        value="Paid"
+                                        onclick="return confirm('Are you sure you want to mark COD Order #{{ order.id }} as Paid?');">
+                                    Mark COD as Paid
+                                </button>
+                            </form>
+                        {% endif %}
+
+                        {% if order.paymentStatus == 'Paid' %}
+                            <form method="post"
+                                  action="{{ path('admin_order_undo_payment', {id: order.id}) }}"
+                                  onsubmit="return confirm('Are you sure you want to undo the payment confirmation for Order #{{ order.id }}?');">
+
+                                <input type="hidden"
+                                       name="_token"
+                                       value="{{ csrf_token('undo_payment_' ~ order.id) }}">
+
+                                <button type="submit" class="undo-button">
+                                    Undo Payment
+                                </button>
+                            </form>
+                        {% endif %}
+
+                    </div>
+
                     <form method="post"
-                          action="{{ path('admin_order_status', {id: order.id}) }}">
+                          action="{{ path('admin_order_status', {id: order.id}) }}"
+                          class="delivery-actions">
+
                         <input type="hidden"
                                name="_token"
                                value="{{ csrf_token('update_order_status_' ~ order.id) }}">
@@ -219,6 +379,7 @@
 
                         <button type="submit">Save Status</button>
                     </form>
+
                 </section>
             {% else %}
                 <div class="empty">No orders have been placed yet.</div>
