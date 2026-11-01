@@ -32,6 +32,22 @@ class Order
     #[ORM\Column(length: 30)]
     private ?string $status = null;
 
+    #[ORM\Column(length: 30, options: ['default' => 'COD'])]
+    private ?string $paymentMethod = 'COD';
+
+    #[ORM\Column(length: 30, options: ['default' => 'Pending'])]
+    private ?string $paymentStatus = 'Pending';
+
+    // New payment information fields
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $paymentAccountName = null;
+
+    #[ORM\Column(length: 100, nullable: true)]
+    private ?string $paymentReferenceNumber = null;
+
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $paymentReceipt = null;
+
     /**
      * @var Collection<int, OrderItem>
      */
@@ -108,6 +124,66 @@ class Order
         return $this;
     }
 
+    public function getPaymentMethod(): ?string
+    {
+        return $this->paymentMethod;
+    }
+
+    public function setPaymentMethod(string $paymentMethod): static
+    {
+        $this->paymentMethod = $paymentMethod;
+
+        return $this;
+    }
+
+    public function getPaymentStatus(): ?string
+    {
+        return $this->paymentStatus;
+    }
+
+    public function setPaymentStatus(string $paymentStatus): static
+    {
+        $this->paymentStatus = $paymentStatus;
+
+        return $this;
+    }
+
+    public function getPaymentAccountName(): ?string
+    {
+        return $this->paymentAccountName;
+    }
+
+    public function setPaymentAccountName(?string $paymentAccountName): static
+    {
+        $this->paymentAccountName = $paymentAccountName;
+
+        return $this;
+    }
+
+    public function getPaymentReferenceNumber(): ?string
+    {
+        return $this->paymentReferenceNumber;
+    }
+
+    public function setPaymentReferenceNumber(?string $paymentReferenceNumber): static
+    {
+        $this->paymentReferenceNumber = $paymentReferenceNumber;
+
+        return $this;
+    }
+
+    public function getPaymentReceipt(): ?string
+    {
+        return $this->paymentReceipt;
+    }
+
+    public function setPaymentReceipt(?string $paymentReceipt): static
+    {
+        $this->paymentReceipt = $paymentReceipt;
+
+        return $this;
+    }
+
     /**
      * @return Collection<int, OrderItem>
      */
@@ -129,7 +205,6 @@ class Order
     public function removeOrderItem(OrderItem $orderItem): static
     {
         if ($this->orderItems->removeElement($orderItem)) {
-            // set the owning side to null (unless already changed)
             if ($orderItem->getParentOrder() === $this) {
                 $orderItem->setParentOrder(null);
             }

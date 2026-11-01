@@ -17,7 +17,8 @@
         </header>
 
         <section class="checkout-section">
-            <form id="checkout-form">
+            <form id="checkout-form" enctype="multipart/form-data">
+
                 <div class="checkout-card">
                     <h2>Customer Information</h2>
 
@@ -36,7 +37,88 @@
                 </div>
 
                 <div class="checkout-card">
+                    <h2>Payment Method</h2>
+
+                    <label for="payment-method">Choose how you want to pay</label>
+
+                    <select id="payment-method" name="paymentMethod" required>
+                        <option value="">-- Select Payment Method --</option>
+                        <option value="COD">Cash on Delivery (COD)</option>
+                        <option value="GoTyme">GoTyme</option>
+                        <option value="Bank Transfer">Bank Transfer</option>
+                    </select>
+
+                    <div id="gotyme-details" class="payment-details" hidden>
+                        <h3>Pay using GoTyme</h3>
+                        <p>Scan the QR code below to make your payment.</p>
+
+                        <img
+                            src="{{ asset('images/gotyme-qr.jpg') }}"
+                            alt="La Mia Pizzeria GoTyme QR Code"
+                            class="payment-qr"
+                        >
+
+                        <p class="payment-note">
+                            After paying, enter your account name and
+                            reference number, then upload your payment receipt.
+                        </p>
+                    </div>
+
+                    <div id="bank-details" class="payment-details" hidden>
+                        <h3>Bank Transfer Details</h3>
+
+                        <p><strong>Bank:</strong> BPI</p>
+                        <p><strong>Account Name:</strong> La Mia Pizzeria</p>
+                        <p><strong>Account Number:</strong> 1995-2006-2006</p>
+
+                        <p class="payment-note">
+                            After completing your bank transfer, enter the sender's account name
+                            and payment reference number, then upload your payment receipt.
+                        </p>
+                    </div>
+
+                    <div id="online-payment-fields" hidden>
+                        <label for="payment-account-name">
+                            Sender's Account Name
+                        </label>
+                        <input
+                            type="text"
+                            id="payment-account-name"
+                            name="paymentAccountName"
+                        >
+
+                        <label for="payment-reference">
+                            Payment Reference Number
+                        </label>
+                        <input
+                            type="text"
+                            id="payment-reference"
+                            name="paymentReferenceNumber"
+                        >
+
+                        <label for="payment-receipt">
+                            Upload Payment Receipt
+                        </label>
+                        <input
+                            type="file"
+                            id="payment-receipt"
+                            name="paymentReceipt"
+                            accept="image/jpeg,image/png,image/webp,application/pdf"
+                        >
+                        <small class="file-help">
+                            Accepted formats: JPG, PNG, WebP, or PDF. Maximum 5 MB.
+                        </small>
+                    </div>
+
+                    <p class="payment-note">
+                        Online payments will remain Pending until an
+                        administrator verifies the payment.
+                    </p>
+                </div>
+
+                <div class="checkout-card">
                     <h2>Order Summary</h2>
+
                     <div id="checkout-items"></div>
 
                     <div class="checkout-total">
@@ -50,6 +132,7 @@
                 <button type="submit" class="place-order-button">
                     Place Order
                 </button>
+
             </form>
         </section>
     </main>
@@ -89,6 +172,11 @@
     font-size: 20px;
 }
 
+.checkout-card h3 {
+    color: #e6bd70;
+    margin-top: 20px;
+}
+
 .checkout-card label {
     display: block;
     margin: 16px 0 8px;
@@ -96,7 +184,8 @@
 }
 
 .checkout-card input,
-.checkout-card textarea {
+.checkout-card textarea,
+.checkout-card select {
     box-sizing: border-box;
     width: 100%;
     padding: 12px;
@@ -105,6 +194,41 @@
     border-radius: 6px;
     color: #fff;
     font: inherit;
+}
+
+.payment-details {
+    margin-top: 22px;
+    padding: 20px;
+    background: #222;
+    border: 1px solid #444;
+    border-radius: 8px;
+    color: #ddd;
+}
+
+.payment-qr {
+    display: block;
+    width: 100%;
+    max-width: 280px;
+    height: auto;
+    margin: 20px auto;
+    padding: 10px;
+    background: #fff;
+    border-radius: 8px;
+}
+
+.payment-note {
+    display: block;
+    margin-top: 8px;
+    color: #bbb;
+    font-size: 14px;
+    line-height: 1.6;
+}
+
+
+.file-help {
+    display: block;
+    margin-top: 8px;
+    color: #aaa;
 }
 
 .checkout-line {
@@ -165,6 +289,37 @@
         if (!itemsContainer || !totalElement || !form) {
             return;
         }
+
+        const paymentMethod = document.getElementById('payment-method');
+        const gotymeDetails = document.getElementById('gotyme-details');
+        const bankDetails = document.getElementById('bank-details');
+        const onlineFields = document.getElementById('online-payment-fields');
+
+        const accountName = document.getElementById('payment-account-name');
+        const referenceNumber = document.getElementById('payment-reference');
+        const receipt = document.getElementById('payment-receipt');
+
+        function updatePaymentDetails() {
+            const method = paymentMethod.value;
+            const isGoTyme = method === 'GoTyme';
+            const isBank = method === 'Bank Transfer';
+            const isOnline = isGoTyme || isBank;
+
+            gotymeDetails.hidden = !isGoTyme;
+            bankDetails.hidden = !isBank;
+            onlineFields.hidden = !isOnline;
+
+            accountName.required = isOnline;
+            referenceNumber.required = isOnline;
+            receipt.required = isOnline;
+
+            accountName.disabled = !isOnline;
+            referenceNumber.disabled = !isOnline;
+            receipt.disabled = !isOnline;
+        }
+
+        paymentMethod.addEventListener('change', updatePaymentDetails);
+        updatePaymentDetails();
 
         function getCart() {
             try {
@@ -236,27 +391,22 @@
                 total <= 0;
         }
 
-        // Show the current cart as soon as Checkout initializes.
         renderSummary();
 
-        // Refresh the displayed total when returning to this page.
         window.addEventListener('pageshow', renderSummary);
 
-        // Refresh when another tab changes the cart.
         window.addEventListener('storage', function (event) {
             if (event.key === CART_KEY || event.key === null) {
                 renderSummary();
             }
         });
 
-        // Refresh when returning to the browser tab.
         document.addEventListener('visibilitychange', function () {
             if (!document.hidden) {
                 renderSummary();
             }
         });
 
-        // Keep the existing order submission behavior.
         form.addEventListener('submit', async function (event) {
             event.preventDefault();
 
@@ -269,23 +419,32 @@
                 return;
             }
 
+            if (!form.reportValidity()) {
+                return;
+            }
+
+            if (receipt.files.length > 0 && receipt.files[0].size > 5 * 1024 * 1024) {
+                message.textContent =
+                    'Your receipt must be 5 MB or smaller.';
+                return;
+            }
+
             const button = form.querySelector('button[type="submit"]');
+
             button.disabled = true;
             message.textContent = 'Submitting your order...';
 
             try {
+                const formData = new FormData(form);
+
+                formData.append('items', JSON.stringify(cart));
+
                 const response = await fetch('/checkout', {
                     method: 'POST',
                     headers: {
-                        'Content-Type': 'application/json',
                         'Accept': 'application/json'
                     },
-                    body: JSON.stringify({
-                        name: document.getElementById('customer-name').value.trim(),
-                        phone: document.getElementById('customer-phone').value.trim(),
-                        address: document.getElementById('customer-address').value.trim(),
-                        items: cart
-                    })
+                    body: formData
                 });
 
                 const result = await response.json();
@@ -300,7 +459,9 @@
                     result.message + ' Order number: ' + result.orderId;
 
                 localStorage.removeItem(CART_KEY);
+
                 form.reset();
+                updatePaymentDetails();
                 renderSummary();
 
             } catch (error) {

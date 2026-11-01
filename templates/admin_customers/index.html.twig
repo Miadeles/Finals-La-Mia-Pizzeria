@@ -1,0 +1,52 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Customer Management | La Mia Pizzeria{% endblock %}
+
+{% block body %}
+<div class="dashboard-container">
+    <aside class="sidebar">
+        {% include 'sidebar/index.html.twig' %}
+    </aside>
+
+    <main class="dashboard-content">
+        <header class="dashboard-header">
+            <h1>Customer Management</h1>
+            <p>View the registered customers of La Mia Pizzeria.</p>
+        </header>
+
+        <section class="dashboard-section">
+            {% if customers is empty %}
+                <div class="orders-empty-state">
+                    <h3>No customers found</h3>
+                    <p>Registered customer accounts will appear here.</p>
+                </div>
+            {% else %}
+                <div class="table-responsive">
+                    <table class="table table-dark table-hover">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>First Name</th>
+                                <th>Last Name</th>
+                                <th>Email</th>
+                                <th>Role</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for customer in customers %}
+                                <tr>
+                                    <td>{{ customer.id }}</td>
+                                    <td>{{ customer.firstName }}</td>
+                                    <td>{{ customer.lastName }}</td>
+                                    <td>{{ customer.email }}</td>
+                                    <td>Customer</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% endif %}
+        </section>
+    </main>
+</div>
+{% endblock %}

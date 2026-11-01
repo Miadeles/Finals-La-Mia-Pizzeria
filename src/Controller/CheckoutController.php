@@ -6,6 +6,7 @@ use App\Entity\Order;
 use App\Entity\OrderItem;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -19,19 +20,31 @@ class CheckoutController extends AbstractController
         EntityManagerInterface $entityManager
     ): Response {
         if ($request->isMethod('POST')) {
-            $data = json_decode($request->getContent(), true);
+            $name = trim((string) $request->request->get('name', ''));
+            $phone = trim((string) $request->request->get('phone', ''));
+            $address = trim((string) $request->request->get('address', ''));
+            $paymentMethod = trim((string) $request->request->get('paymentMethod', ''));
 
-            if (!is_array($data)) {
+            $itemsJson = $request->request->get('items', '');
+            $items = json_decode($itemsJson, true);
+
+            $accountName = trim((string) $request->request->get('paymentAccountName', ''));
+            $referenceNumber = trim((string) $request->request->get('paymentReferenceNumber', ''));
+
+            $receipt = $request->files->get('paymentReceipt');
+
+            $allowedPaymentMethods = [
+                'COD',
+                'GoTyme',
+                'Bank Transfer',
+            ];
+
+            if (!in_array($paymentMethod, $allowedPaymentMethods, true)) {
                 return new JsonResponse([
                     'success' => false,
-                    'message' => 'Invalid order data.',
+                    'message' => 'Please select a valid payment method.',
                 ], 400);
             }
-
-            $name = trim((string) ($data['name'] ?? ''));
-            $phone = trim((string) ($data['phone'] ?? ''));
-            $address = trim((string) ($data['address'] ?? ''));
-            $items = $data['items'] ?? [];
 
             if (
                 $name === '' ||
@@ -46,15 +59,62 @@ class CheckoutController extends AbstractController
                 ], 400);
             }
 
-            $order = new Order();
-            $order->setCustomerName($name);
-            $order->setCustomerPhone($phone);
-            $order->setCustomerAddress($address);
-            $order->setStatus('Pending');
+            $isOnlinePayment = in_array(
+                $paymentMethod,
+                ['GoTyme', 'Bank Transfer'],
+                true
+            );
 
-            $total = 0;
+            if (
+                $isOnlinePayment &&
+                ($accountName === '' || $referenceNumber === '')
+            ) {
+                return new JsonResponse([
+                    'success' => false,
+                    'message' => 'Please provide your account name and payment reference number.',
+                ], 400);
+            }
 
-            // Existing prices remain unchanged.
+            if ($isOnlinePayment && !$receipt instanceof UploadedFile) {
+                return new JsonResponse([
+                    'success' => false,
+                    'message' => 'Please upload your payment receipt.',
+                ], 400);
+            }
+
+            if ($receipt instanceof UploadedFile) {
+                if (!$receipt->isValid()) {
+                    return new JsonResponse([
+                        'success' => false,
+                        'message' => 'The uploaded receipt could not be received. Please try again.',
+                    ], 400);
+                }
+
+                if ($receipt->getSize() > 5 * 1024 * 1024) {
+                    return new JsonResponse([
+                        'success' => false,
+                        'message' => 'The receipt must be 5 MB or smaller.',
+                    ], 400);
+                }
+
+                $mimeType = $receipt->getMimeType();
+
+                $allowedMimeTypes = [
+                    'image/jpeg',
+                    'image/png',
+                    'image/webp',
+                    'application/pdf',
+                ];
+
+                if (!in_array($mimeType, $allowedMimeTypes, true)) {
+                    return new JsonResponse([
+                        'success' => false,
+                        'message' => 'Please upload a JPG, PNG, WebP, or PDF receipt.',
+                    ], 400);
+                }
+            }
+
+            // Existing pizza prices remain unchanged.
             $prices = [
                 'Pepperoni' => ['Small' => 399, 'Medium' => 449, 'Large' => 499],
                 'Margherita' => ['Small' => 349, 'Medium' => 399, 'Large' => 449],
@@ -67,6 +127,10 @@ class CheckoutController extends AbstractController
                 'American Bacon & Cheeseburger' => ['Small' => 479, 'Medium' => 529, 'Large' => 579],
             ];
 
+            // Validate all order items before saving anything.
+            $validatedItems = [];
+            $total = 0;
+
             foreach ($items as $item) {
                 if (!is_array($item)) {
                     return new JsonResponse([
@@ -78,7 +142,6 @@ class CheckoutController extends AbstractController
                 $pizzaName = trim((string) ($item['name'] ?? ''));
                 $pizzaSize = trim((string) ($item['size'] ?? ''));
 
-                // Accept the menu's displayed name, which ends in "Pizza".
                 if (str_ends_with($pizzaName, ' Pizza')) {
                     $pizzaName = substr($pizzaName, 0, -6);
                 }
@@ -111,23 +174,96 @@ class CheckoutController extends AbstractController
                 $price = $prices[$pizzaName][$pizzaSize];
                 $total += $price * $quantity;
 
-                $orderItem = (new OrderItem())
-                    ->setPizzaName($pizzaName)
-                    ->setPizzaSize($pizzaSize)
-                    ->setQuantity($quantity)
-                    ->setPrice($price);
-
-                $order->addOrderItem($orderItem);
-                $entityManager->persist($orderItem);
+                $validatedItems[] = [
+                    'name' => $pizzaName,
+                    'size' => $pizzaSize,
+                    'quantity' => $quantity,
+                    'price' => $price,
+                ];
             }
 
-            $order->setTotal($total);
-            $entityManager->persist($order);
-            $entityManager->flush();
+            $order = new Order();
+            $order->setCustomerName($name);
+            $order->setCustomerPhone($phone);
+            $order->setCustomerAddress($address);
+            $order->setStatus('Pending');
+            $order->setPaymentMethod($paymentMethod);
+            $order->setPaymentStatus('Pending');
+
+            if ($isOnlinePayment) {
+                $order->setPaymentAccountName($accountName);
+                $order->setPaymentReferenceNumber($referenceNumber);
+            }
+
+            $savedReceiptName = null;
+
+            try {
+                // Save the receipt using a generated filename.
+                if ($isOnlinePayment && $receipt instanceof UploadedFile) {
+                    $extension = match ($receipt->getMimeType()) {
+                        'image/jpeg' => 'jpg',
+                        'image/png' => 'png',
+                        'image/webp' => 'webp',
+                        'application/pdf' => 'pdf',
+                        default => null,
+                    };
+
+                    if ($extension === null) {
+                        return new JsonResponse([
+                            'success' => false,
+                            'message' => 'Unsupported receipt file.',
+                        ], 400);
+                    }
+
+                    $uploadDirectory = $this->getParameter('kernel.project_dir')
+                        . '/public/uploads/payment_receipts';
+
+                    if (!is_dir($uploadDirectory)) {
+                        mkdir($uploadDirectory, 0755, true);
+                    }
+
+                    $savedReceiptName = bin2hex(random_bytes(16))
+                        . '.' . $extension;
+
+                    $receipt->move($uploadDirectory, $savedReceiptName);
+
+                    $order->setPaymentReceipt($savedReceiptName);
+                }
+
+                foreach ($validatedItems as $item) {
+                    $orderItem = (new OrderItem())
+                        ->setPizzaName($item['name'])
+                        ->setPizzaSize($item['size'])
+                        ->setQuantity($item['quantity'])
+                        ->setPrice($item['price']);
+
+                    $order->addOrderItem($orderItem);
+                    $entityManager->persist($orderItem);
+                }
+
+                $order->setTotal($total);
+
+                $entityManager->persist($order);
+                $entityManager->flush();
+
+            } catch (\Throwable $exception) {
+                // Remove an uploaded file if saving the order fails.
+                if ($savedReceiptName !== null) {
+                    $savedPath = $this->getParameter('kernel.project_dir')
+                        . '/public/uploads/payment_receipts/'
+                        . $savedReceiptName;
+
+                    if (is_file($savedPath)) {
+                        unlink($savedPath);
+                    }
+                }
+
+                throw $exception;
+            }
 
             return new JsonResponse([
                 'success' => true,
-                'message' => 'Your order has been placed successfully!',
+                'message' => 'Your order has been placed successfully! Payment status: Pending.',
                 'orderId' => $order->getId(),
             ]);
         }

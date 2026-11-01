@@ -22,6 +22,7 @@ final class DashboardController extends AbstractController
             'totalProducts' => $productRepository->count([]),
             'totalOrders' => $orderRepository->count([]),
             'totalCustomers' => $userRepository->count([]),
+            'recentOrders' => $orderRepository->findBy([], ['id' => 'DESC'], 5),
         ]);
     }
 }

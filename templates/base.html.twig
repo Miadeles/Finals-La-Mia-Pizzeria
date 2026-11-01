@@ -26,11 +26,16 @@
 
                 .sidebar {
                     width: 220px;
-                    min-height: 100vh;
+                    height: 100vh;
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    flex-shrink: 0;
                     padding: 24px 16px;
+                    background: #181818;
+                    overflow-y: auto;
+                    z-index: 1000;
                     box-sizing: border-box;
-                    background-color: #181818;
-                    box-shadow: 4px 0 15px rgba(0, 0, 0, 0.35);
                 }
 
                 .sidebar-content {
@@ -77,6 +82,7 @@
                 .dashboard-content {
                     flex: 1;
                     min-width: 0;
+                    margin-left: 220px;
                     padding: 30px 40px;
                     box-sizing: border-box;
                     background-color: #111111;

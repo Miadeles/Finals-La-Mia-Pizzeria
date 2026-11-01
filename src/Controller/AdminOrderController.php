@@ -17,7 +17,7 @@ class AdminOrderController extends AbstractController
             ->getRepository(Order::class)
             ->findBy([], ['id' => 'DESC']);
 
-        return $this->render('admin/orders.html.twig', [
+        return $this->render('admin_orders/index.html.twig', [
             'orders' => $orders,
         ]);
     }

@@ -1,0 +1,230 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Admin Orders | La Mia Pizzeria{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <style>
+        .orders-container {
+            max-width: 1200px;
+            margin: auto;
+            color: #ffffff;
+        }
+
+        .orders-container h1 {
+            color: #ffffff;
+        }
+
+        .orders-container .subtitle {
+            color: #a8a8a8;
+        }
+
+        .message {
+            padding: 12px 16px;
+            margin: 12px 0;
+            border-radius: 8px;
+            background: #e2f4e5;
+            color: #292521;
+        }
+
+        .error {
+            background: #ffe2e2;
+        }
+
+        .order {
+            background: #181818;
+            color: #ffffff;
+            padding: 22px;
+            margin: 20px 0;
+            border-radius: 12px;
+            border: 1px solid #292929;
+        }
+
+        .order-header {
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+            flex-wrap: wrap;
+            border-bottom: 1px solid #333;
+            padding-bottom: 12px;
+        }
+
+        .status {
+            display: inline-block;
+            padding: 6px 10px;
+            border-radius: 20px;
+            background: #fff0cb;
+            color: #292521;
+            font-size: 13px;
+            font-weight: bold;
+        }
+
+        .details {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 16px;
+            margin: 18px 0;
+        }
+
+        .label {
+            color: #a8a8a8;
+            font-size: 12px;
+            text-transform: uppercase;
+            margin-bottom: 6px;
+        }
+
+        .orders-container .order .items,
+        .orders-container .order .items li,
+        .orders-container .order .total {
+            font-size: 16px !important;
+            line-height: 1.8;
+        }
+
+        .orders-container .order .total {
+            font-weight: bold;
+            color: #ffffff;
+        }
+
+        .orders-container select,
+        .orders-container button {
+            padding: 10px 12px;
+            border-radius: 6px;
+            border: 1px solid #ccc;
+            font-size: 14px;
+        }
+
+        .orders-container button {
+            background: #8b2026;
+            color: white;
+            border: 0;
+            cursor: pointer;
+        }
+
+        .orders-container button:hover {
+            background: #6f171c;
+        }
+
+        .orders-container form {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .empty {
+            background: #181818;
+            padding: 25px;
+            border-radius: 10px;
+        }
+
+        @media (max-width: 600px) {
+            .order {
+                padding: 16px;
+            }
+        }
+
+        .orders-container .order .order-items-heading {
+            font-size: 16px !important;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+        
+    </style>
+{% endblock %}
+
+{% block body %}
+<div class="dashboard-container">
+
+    <aside class="sidebar">
+        {% include 'sidebar/index.html.twig' %}
+    </aside>
+
+    <main class="dashboard-content">
+        <div class="orders-container">
+
+            <h1>La Mia Pizzeria — Admin Orders</h1>
+            <p class="subtitle">View customer orders and update their delivery status.</p>
+
+            {% for message in app.flashes('success') %}
+                <div class="message">{{ message }}</div>
+            {% endfor %}
+
+            {% for message in app.flashes('error') %}
+                <div class="message error">{{ message }}</div>
+            {% endfor %}
+
+            <h2>All Orders ({{ orders|length }})</h2>
+
+            {% for order in orders %}
+                <section class="order">
+                    <div class="order-header">
+                        <h2>Order #{{ order.id }}</h2>
+                        <span class="status">{{ order.status }}</span>
+                    </div>
+
+                    <div class="details">
+                        <div>
+                            <div class="label">Customer</div>
+                            <strong>{{ order.customerName }}</strong>
+                        </div>
+
+                        <div>
+                            <div class="label">Phone</div>
+                            {{ order.customerPhone }}
+                        </div>
+
+                        <div>
+                            <div class="label">Delivery Address</div>
+                            {{ order.customerAddress }}
+                        </div>
+                    </div>
+
+                    <h3 class="order-items-heading">Order Items</h3>
+                    <ul class="items">
+                        {% for item in order.orderItems %}
+                            <li>
+                                {{ item.pizzaName }} — {{ item.pizzaSize }}
+                                × {{ item.quantity }}
+                                (₱{{ (item.price * item.quantity)|number_format(2, '.', ',') }})
+                            </li>
+                        {% endfor %}
+                    </ul>
+
+                    <p class="total">
+                        Total: ₱{{ order.total|number_format(2, '.', ',') }}
+                    </p>
+
+                    <form method="post"
+                          action="{{ path('admin_order_status', {id: order.id}) }}">
+                        <input type="hidden"
+                               name="_token"
+                               value="{{ csrf_token('update_order_status_' ~ order.id) }}">
+
+                        <label for="status-{{ order.id }}">Update status:</label>
+
+                        <select id="status-{{ order.id }}" name="status">
+                            {% for status in [
+                                'Pending',
+                                'Preparing',
+                                'Out for Delivery',
+                                'Delivered',
+                                'Cancelled'
+                            ] %}
+                                <option value="{{ status }}"
+                                    {% if order.status == status %}selected{% endif %}>
+                                    {{ status }}
+                                </option>
+                            {% endfor %}
+                        </select>
+
+                        <button type="submit">Save Status</button>
+                    </form>
+                </section>
+            {% else %}
+                <div class="empty">No orders have been placed yet.</div>
+            {% endfor %}
+
+        </div>
+    </main>
+</div>
+{% endblock %}

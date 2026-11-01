@@ -33,9 +33,11 @@
              SUMMARY CARDS
         ========================== -->
 
+        {% if is_granted('ROLE_ADMIN') %}
+
         <section class="dashboard-summary">
 
-            <article class="summary-card">
+            <a href="{{ path('app_product_index') }}" class="summary-card summary-card-link">
 
                 <div class="summary-number">
                     {{ totalProducts }}
@@ -51,10 +53,10 @@
 
                 </div>
 
-            </article>
+            </a>
 
 
-            <article class="summary-card">
+            <a href="{{ path('admin_orders') }}" class="summary-card summary-card-link">
 
                 <div class="summary-number">
                     {{ totalOrders }}
@@ -70,10 +72,10 @@
 
                 </div>
 
-            </article>
+            </a>
 
 
-            <article class="summary-card">
+            <a href="{{ path('admin_customers') }}" class="summary-card summary-card-link">
 
                 <div class="summary-number">
                     {{ totalCustomers }}
@@ -89,9 +91,11 @@
 
                 </div>
 
-            </article>
+            </a>
 
         </section>
+
+        {% endif %}
 
 
 
@@ -225,36 +229,59 @@
              RECENT ORDERS
         ========================== -->
 
+        {% if is_granted('ROLE_ADMIN') %}
+
         <section class="dashboard-section">
 
             <div class="section-header">
-
                 <h2>Recent Orders</h2>
-
-                <p>
-                    Recent customer orders will appear here.
-                </p>
-
             </div>
 
+            {% if recentOrders is empty %}
 
-            <div class="orders-empty-state">
-
-                <div class="empty-icon">
-                    🛒
+                <div class="orders-empty-state">
+                    <div class="empty-icon">🛒</div>
+                    <h3>No recent orders</h3>
+                    <p>Orders placed by customers will appear here.</p>
                 </div>
 
-                <h3>
-                    No recent orders
-                </h3>
+            {% else %}
 
-                <p>
-                    Orders placed by customers will appear here.
-                </p>
+                <div class="recent-orders-list">
 
-            </div>
+                    {% for order in recentOrders %}
+
+                        <article class="recent-order-card">
+                            <div class="recent-order-info">
+                                <h3>Order #{{ order.id }}</h3>
+                                <p>{{ order.customerName }}</p>
+                            </div>
+
+                            <div class="recent-order-pizzas">
+                                {% for item in order.orderItems %}
+                                    <p>
+                                        {{ item.pizzaName }}
+                                        ({{ item.pizzaSize }}) × {{ item.quantity }}
+                                    </p>
+                                {% endfor %}
+                            </div>
+
+                            <div class="recent-order-total">
+                                ₱{{ order.total|number_format(2, '.', ',') }}
+                            </div>
+
+                            <span class="order-status">{{ order.status }}</span>
+                        </article>
+
+                    {% endfor %}
+
+                </div>
+
+            {% endif %}
 
         </section>
+
+        {% endif %}
 
 
 
@@ -436,6 +463,26 @@
     border: 1px solid #292929;
 
     border-radius: 10px;
+}
+
+.summary-card-link {
+    color: inherit;
+    text-decoration: none;
+    cursor: pointer;
+    transition: transform 0.2s ease, border-color 0.2s ease;
+}
+
+.summary-card-link:hover {
+    color: inherit;
+    text-decoration: none;
+    background-color: #202020;
+    border-color: #444444;
+    transform: translateY(-3px);
+}
+
+.summary-card-link:focus-visible {
+    outline: 2px solid #e6bd70;
+    outline-offset: 3px;
 }
 
 .summary-number {
@@ -643,6 +690,53 @@
 /* =========================================
    RECENT ORDERS
 ========================================= */
+
+.recent-orders-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.recent-order-card {
+    display: grid;
+    grid-template-columns: 1fr 2fr 150px 150px;
+    align-items: center;
+    gap: 20px;
+    padding: 20px 24px;
+    background-color: #181818;
+    border: 1px solid #292929;
+    border-radius: 10px;
+}
+
+.recent-order-info h3 {
+    margin: 0 0 6px;
+    color: #fff;
+    font-size: 16px;
+}
+
+.recent-order-info p {
+    margin: 0;
+    color: #a8a8a8;
+    font-size: 14px;
+}
+
+.recent-order-total {
+    color: #66bb6a;
+    font-weight: 600;
+    text-align: center;
+}
+
+.order-status {
+    display: inline-block;
+    justify-self: end;
+    padding: 7px 12px;
+    background: #292929;
+    border-radius: 5px;
+    color: #e6bd70;
+    font-size: 12px;
+    text-align: center;
+    min-width: 120px;
+}
 
 .orders-empty-state {
 
