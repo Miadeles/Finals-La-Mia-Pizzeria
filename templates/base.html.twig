@@ -2,6 +2,11 @@
 <html>
     <head>
         <meta charset="UTF-8">
+        <script>
+            if (window.location.hash === '#change-password') {
+                document.documentElement.classList.add('password-scroll-pending');
+            }
+        </script>
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css">
         <title>{% block title %}La Mia Pizzeria{% endblock %}</title>
 
@@ -9,6 +14,11 @@
 
         {% block stylesheets %}
             <style>
+
+                html.password-scroll-pending .dashboard-container {
+                    visibility: hidden;
+                }
+
                 body {
                     margin: 0;
                     padding: 0;

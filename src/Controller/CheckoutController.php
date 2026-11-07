@@ -4,6 +4,7 @@ namespace App\Controller;
 
 use App\Entity\Order;
 use App\Entity\OrderItem;
+use App\Entity\User;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
@@ -186,6 +187,9 @@ class CheckoutController extends AbstractController
             $order->setCustomerName($name);
             $order->setCustomerPhone($phone);
             $order->setCustomerAddress($address);
+            if ($this->getUser() instanceof \App\Entity\User) {
+                $order->setUser($this->getUser());
+            }
             $order->setStatus('Pending');
             $order->setPaymentMethod($paymentMethod);
             $order->setPaymentStatus('Pending');
@@ -268,6 +272,10 @@ class CheckoutController extends AbstractController
             ]);
         }
 
-        return $this->render('checkout/index.html.twig');
+        $user = $this->getUser();
+
+        return $this->render('checkout/index.html.twig', [
+            'user' => $user instanceof User ? $user : null,
+        ]);
     }
 }

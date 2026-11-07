@@ -1,0 +1,281 @@
+
+{% extends 'base.html.twig' %}
+
+{% block title %}My Orders | La Mia Pizzeria{% endblock %}
+
+{% block body %}
+<div class="dashboard-container">
+
+    <aside class="sidebar">
+        {% include 'sidebar/index.html.twig' %}
+    </aside>
+
+    <main class="dashboard-content">
+        <h1>My Orders</h1>
+        <p class="page-description">View your order history and payment status.</p>
+
+        {% if orders is empty %}
+            <div class="empty-orders">
+                <h3>No orders yet</h3>
+                <p>Your pizza orders will appear here once you place an order.</p>
+                <a href="{{ path('app_menu') }}">Explore Our Menu</a>
+            </div>
+        {% else %}
+            <div class="orders-list">
+                {% for order in orders %}
+                    <div class="order-card">
+                        <div class="order-header">
+                            <h3>Order #{{ order.id }}</h3>
+                            <span class="status">{{ order.status }}</span>
+                        </div>
+
+                        {% if order.status == 'Cancelled' %}
+                            <div class="tracking-cancelled">
+                                This order has been cancelled.
+                            </div>
+                        {% else %}
+                            {% set currentStep = 0 %}
+
+                            {% if order.status == 'Preparing' %}
+                                {% set currentStep = 1 %}
+                            {% elseif order.status == 'Out for Delivery' %}
+                                {% set currentStep = 2 %}
+                            {% elseif order.status == 'Delivered' %}
+                                {% set currentStep = 3 %}
+                            {% endif %}
+
+                            {% set trackingSteps = [
+                                'Pending',
+                                'Preparing',
+                                'Out for Delivery',
+                                'Delivered'
+                            ] %}
+
+                            <div class="order-tracking">
+                                <h4>Order Progress</h4>
+
+                                <div class="tracking-steps">
+                                    {% for step in trackingSteps %}
+                                        <div class="tracking-step">
+                                            <div class="tracking-circle
+                                                {{ loop.index0 <= currentStep ? 'completed' : '' }}
+                                                {{ loop.index0 == currentStep ? 'current' : '' }}">
+                                                {{ loop.index0 < currentStep ? '✓' : loop.index }}
+                                            </div>
+
+                                            <span class="{{ loop.index0 <= currentStep ? 'step-active' : '' }}">
+                                                {{ step }}
+                                            </span>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        {% endif %}
+
+                        <div class="order-details">
+                            <p><strong>Customer:</strong> {{ order.customerName }}</p>
+                            <p><strong>Phone:</strong> {{ order.customerPhone }}</p>
+                            <p><strong>Address:</strong> {{ order.customerAddress }}</p>
+                        </div>
+
+                        <div class="ordered-pizzas">
+                            <h4>Ordered Pizzas</h4>
+                            {% for item in order.orderItems %}
+                                <p>
+                                    {{ item.quantity }} ×
+                                    {{ item.pizzaName }} ({{ item.pizzaSize }})
+                                </p>
+                            {% endfor %}
+                        </div>
+
+                        <div class="payment-details">
+                            <p><strong>Payment Method:</strong> {{ order.paymentMethod }}</p>
+                            <p><strong>Payment Status:</strong> {{ order.paymentStatus }}</p>
+                            <h3>Total: ₱{{ order.total|number_format(2) }}</h3>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    </main>
+</div>
+
+<style>
+    .page-description {
+        color: #aaa;
+        margin-bottom: 30px;
+    }
+
+    .orders-list {
+        display: grid;
+        gap: 20px;
+    }
+
+    .order-card {
+        background: #181818;
+        border: 1px solid #333;
+        border-radius: 12px;
+        padding: 24px;
+        color: #fff;
+    }
+
+    .order-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 1px solid #333;
+        padding-bottom: 15px;
+        margin-bottom: 18px;
+    }
+
+    .order-header h3 {
+        margin: 0;
+        color: #f5d7a1;
+    }
+
+    .status {
+        background: #fff0cb;
+        color: #292521;
+        border-radius: 20px;
+        padding: 7px 14px;
+        font-size: 13px;
+        font-weight: bold;
+    }
+
+    .order-tracking {
+        margin: 20px 0;
+        padding: 20px;
+        background: #202020;
+        border: 1px solid #333;
+        border-radius: 10px;
+    }
+
+    .order-tracking h4 {
+        margin: 0 0 20px;
+        color: #f5d7a1;
+    }
+
+    .tracking-steps {
+        display: flex;
+        justify-content: space-between;
+        gap: 10px;
+    }
+
+    .tracking-step {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        gap: 10px;
+        color: #888;
+        font-size: 12px;
+    }
+
+    .tracking-circle {
+        width: 34px;
+        height: 34px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: 2px solid #555;
+        border-radius: 50%;
+        font-weight: bold;
+    }
+
+    .tracking-circle.completed {
+        background: #8b1e1e;
+        border-color: #8b1e1e;
+        color: white;
+    }
+
+    .tracking-circle.current {
+        border-color: #f5d7a1;
+        box-shadow: 0 0 0 3px rgba(245, 215, 161, 0.15);
+    }
+
+    .tracking-step .step-active {
+        color: #f5d7a1;
+        font-weight: bold;
+    }
+
+    .tracking-cancelled {
+        margin: 20px 0;
+        padding: 15px;
+        background: #3a2020;
+        border: 1px solid #8b1e1e;
+        border-radius: 8px;
+        color: #ffb3b3;
+        font-weight: bold;
+    }
+
+    @media (max-width: 600px) {
+        .tracking-steps {
+            gap: 4px;
+        }
+
+        .tracking-step {
+            font-size: 10px;
+        }
+
+        .tracking-circle {
+            width: 28px;
+            height: 28px;
+        }
+    }
+
+    .order-details p,
+    .ordered-pizzas p,
+    .payment-details p {
+        color: #ccc;
+        margin-bottom: 9px;
+    }
+
+    .order-card h4 {
+        color: #f5d7a1;
+        margin-top: 20px;
+    }
+
+    .payment-details {
+        border-top: 1px solid #333;
+        margin-top: 20px;
+        padding-top: 15px;
+    }
+
+    .payment-details h3 {
+        color: #f5d7a1;
+        margin-top: 15px;
+    }
+
+    .empty-orders {
+        background: #181818;
+        border: 1px solid #333;
+        border-radius: 12px;
+        padding: 40px;
+        text-align: center;
+    }
+
+    .empty-orders h3 {
+        color: #f5d7a1;
+    }
+
+    .empty-orders p {
+        color: #aaa;
+    }
+
+    .empty-orders a {
+        display: inline-block;
+        margin-top: 15px;
+        padding: 10px 20px;
+        background: #8b1e1e;
+        color: white;
+        border-radius: 6px;
+        text-decoration: none;
+    }
+
+    .empty-orders a:hover {
+        background: #a52a2a;
+        color: white;
+    }
+</style>
+{% endblock %}

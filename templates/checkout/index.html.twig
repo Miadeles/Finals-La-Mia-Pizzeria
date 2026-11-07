@@ -23,17 +23,40 @@
                     <h2>Customer Information</h2>
 
                     <label for="customer-name">Full Name</label>
-                    <input id="customer-name" name="name"
-                           type="text" autocomplete="name" required>
+                    <input
+                        id="customer-name"
+                        name="name"
+                        type="text"
+                        autocomplete="name"
+                        value="{{ user ? (user.firstName ~ ' ' ~ user.lastName)|trim : '' }}"
+                        required
+                    >
 
                     <label for="customer-phone">Contact Number</label>
-                    <input id="customer-phone" name="phone"
-                           type="tel" autocomplete="tel" required>
+                    <input
+                        id="customer-phone"
+                        name="phone"
+                        type="tel"
+                        autocomplete="tel"
+                        value="{{ user ? user.phoneNumber|default('') : '' }}"
+                        required
+                    >
 
                     <label for="customer-address">Delivery Address</label>
-                    <textarea id="customer-address" name="address"
-                              autocomplete="street-address"
-                              rows="3" required></textarea>
+                    <textarea
+                        id="customer-address"
+                        name="address"
+                        autocomplete="street-address"
+                        rows="3"
+                        required
+                    >{{ user ? user.deliveryAddress|default('') : '' }}</textarea>
+
+                    {% if user %}
+                        <p class="profile-shortcut">
+                            Need to update your details?
+                            <a href="{{ path('app_profile') }}">Go to My Account</a>
+                        </p>
+                    {% endif %}
                 </div>
 
                 <div class="checkout-card">
@@ -105,6 +128,7 @@
                             name="paymentReceipt"
                             accept="image/jpeg,image/png,image/webp,application/pdf"
                         >
+
                         <small class="file-help">
                             Accepted formats: JPG, PNG, WebP, or PDF. Maximum 5 MB.
                         </small>
@@ -196,6 +220,7 @@
     font: inherit;
 }
 
+
 .payment-details {
     margin-top: 22px;
     padding: 20px;
@@ -224,7 +249,6 @@
     line-height: 1.6;
 }
 
-
 .file-help {
     display: block;
     margin-top: 8px;
@@ -250,6 +274,22 @@
 
 .checkout-total strong {
     color: #66bb6a;
+}
+
+.profile-shortcut {
+    margin: 14px 0 0;
+    color: #aaa;
+    font-size: 14px;
+}
+
+.profile-shortcut a {
+    color: #e6bd70;
+    text-decoration: none;
+    font-weight: bold;
+}
+
+.profile-shortcut a:hover {
+    text-decoration: underline;
 }
 
 .place-order-button {
@@ -423,7 +463,10 @@
                 return;
             }
 
-            if (receipt.files.length > 0 && receipt.files[0].size > 5 * 1024 * 1024) {
+            if (
+                receipt.files.length > 0 &&
+                receipt.files[0].size > 5 * 1024 * 1024
+            ) {
                 message.textContent =
                     'Your receipt must be 5 MB or smaller.';
                 return;

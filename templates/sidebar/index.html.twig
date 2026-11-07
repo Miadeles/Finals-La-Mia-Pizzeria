@@ -51,6 +51,18 @@
             Cart
         </a>
 
+        {% if is_granted('ROLE_USER') and not is_granted('ROLE_ADMIN') %}
+            <a href="{{ path('app_my_orders') }}"
+            class="{{ app.request.attributes.get('_route') == 'app_my_orders' ? 'active' : '' }}">
+                My Orders
+            </a>
+
+            <a href="{{ path('app_profile') }}"
+            class="{{ app.request.attributes.get('_route') == 'app_profile' ? 'active' : '' }}">
+                My Account
+            </a>
+        {% endif %}
+
     </nav>
 
 </div>
