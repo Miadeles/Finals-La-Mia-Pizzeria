@@ -50,7 +50,7 @@
             padding-bottom: 12px;
         }
 
-       .status {
+        .status {
             display: inline-flex;
             align-items: center;
             justify-content: center;
@@ -170,16 +170,31 @@
             border-radius: 10px;
         }
 
-        @media (max-width: 600px) {
-            .order {
-                padding: 16px;
-            }
-        }
-
         .orders-container .order .order-items-heading {
             font-size: 16px !important;
             font-weight: 600;
             margin-bottom: 8px;
+        }
+
+        .order-type {
+            display: inline-block;
+            padding: 7px 12px;
+            border-radius: 6px;
+            background: #292929;
+            border: 1px solid #444;
+            color: #e6bd70;
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .orders-container .order .order-type-label {
+            margin-top: 14px;
+        }
+
+        @media (max-width: 600px) {
+            .order {
+                padding: 16px;
+            }
         }
     </style>
 {% endblock %}
@@ -195,7 +210,10 @@
         <div class="orders-container">
 
             <h1>La Mia Pizzeria — Admin Orders</h1>
-            <p class="subtitle">View customer orders and update their delivery status.</p>
+
+            <p class="subtitle">
+                View customer orders, verify payments, and update order status.
+            </p>
 
             {% for message in app.flashes('success') %}
                 <div class="message">{{ message }}</div>
@@ -208,6 +226,11 @@
             <h2>All Orders ({{ orders|length }})</h2>
 
             {% for order in orders %}
+
+                {% set isWalkIn = order.orderType == 'walk_in' %}
+                {% set isStaffAssisted = order.orderType == 'staff_assisted' %}
+                {% set isCash = order.paymentMethod == 'COD' %}
+
                 <section class="order">
 
                     <div class="order-header">
@@ -215,7 +238,22 @@
                         <span class="status">{{ order.status }}</span>
                     </div>
 
+                    <div class="order-type-label">
+                        <div class="label">Order Type</div>
+
+                        <span class="order-type">
+                            {% if isWalkIn %}
+                                Walk-in Order (In-store)
+                            {% elseif isStaffAssisted %}
+                                Phone / Message Order
+                            {% else %}
+                                Personal Order
+                            {% endif %}
+                        </span>
+                    </div>
+
                     <div class="details">
+
                         <div>
                             <div class="label">Customer</div>
                             <strong>{{ order.customerName }}</strong>
@@ -227,9 +265,17 @@
                         </div>
 
                         <div>
-                            <div class="label">Delivery Address</div>
-                            {{ order.customerAddress }}
+                            {% if isWalkIn %}
+                                <div class="label">Fulfillment</div>
+                                <strong>
+                                    In-store (No delivery address required)
+                                </strong>
+                            {% else %}
+                                <div class="label">Delivery Address</div>
+                                {{ order.customerAddress ?: 'Not provided' }}
+                            {% endif %}
                         </div>
+
                     </div>
 
                     <h3 class="order-items-heading">Order Items</h3>
@@ -253,17 +299,30 @@
                     <h3>Payment Information</h3>
 
                     <div class="details">
+
                         <div>
                             <div class="label">Payment Method</div>
-                            <strong>{{ order.paymentMethod }}</strong>
+
+                            <strong>
+                                {% if isCash and isWalkIn %}
+                                    Cash (In-store)
+                                {% elseif isCash %}
+                                    Cash on Delivery (COD)
+                                {% else %}
+                                    {{ order.paymentMethod }}
+                                {% endif %}
+                            </strong>
                         </div>
 
                         <div>
                             <div class="label">Payment Status</div>
-                            <span class="status">{{ order.paymentStatus }}</span>
+                            <span class="status">
+                                {{ order.paymentStatus }}
+                            </span>
                         </div>
 
-                        {% if order.paymentMethod != 'COD' %}
+                        {% if not isCash %}
+
                             <div>
                                 <div class="label">Sender's Account Name</div>
                                 {{ order.paymentAccountName ?: 'Not provided' }}
@@ -278,111 +337,180 @@
                                 <div class="label">Payment Receipt</div>
 
                                 {% if order.paymentReceipt %}
-                                    <a href="{{ path('admin_order_payment_receipt', {id: order.id}) }}"
-                                       target="_blank"
-                                       rel="noopener noreferrer"
-                                       style="color: #e6bd70;">
+                                    <a
+                                        href="{{ path('admin_order_payment_receipt', {id: order.id}) }}"
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        style="color: #e6bd70;"
+                                    >
                                         View Payment Receipt
                                     </a>
                                 {% else %}
                                     No receipt uploaded
                                 {% endif %}
                             </div>
+
                         {% endif %}
+
                     </div>
 
                     <div class="order-actions">
 
-                        {% if order.paymentMethod != 'COD' and order.paymentStatus == 'Pending' %}
-                            <form method="post"
-                                  action="{{ path('admin_order_payment_status', {id: order.id}) }}">
+                        {# ONLINE PAYMENT CONFIRMATION #}
+                        {% if not isCash and order.paymentStatus == 'Pending' %}
 
-                                <input type="hidden"
-                                       name="_token"
-                                       value="{{ csrf_token('update_payment_status_' ~ order.id) }}">
+                            <form
+                                method="post"
+                                action="{{ path('admin_order_payment_status', {id: order.id}) }}"
+                            >
 
-                                <button type="submit"
-                                        name="paymentStatus"
-                                        value="Paid"
-                                        onclick="return confirm('Are you sure you want to mark Order #{{ order.id }} as Paid?');">
+                                <input
+                                    type="hidden"
+                                    name="_token"
+                                    value="{{ csrf_token('update_payment_status_' ~ order.id) }}"
+                                >
+
+                                <button
+                                    type="submit"
+                                    name="paymentStatus"
+                                    value="Paid"
+                                    onclick="return confirm('Are you sure you want to mark Order #{{ order.id }} as Paid?');"
+                                >
                                     Mark as Paid
                                 </button>
 
-                                <button type="submit"
-                                        name="paymentStatus"
-                                        value="Rejected"
-                                        class="reject-button"
-                                        onclick="return confirm('Are you sure you want to reject the payment for Order #{{ order.id }}?');">
+                                <button
+                                    type="submit"
+                                    name="paymentStatus"
+                                    value="Rejected"
+                                    class="reject-button"
+                                    onclick="return confirm('Are you sure you want to reject the payment for Order #{{ order.id }}?');"
+                                >
                                     Reject Payment
                                 </button>
+
                             </form>
+
                         {% endif %}
 
-                        {% if order.paymentMethod == 'COD' and order.paymentStatus == 'Pending' %}
-                            <form method="post"
-                                  action="{{ path('admin_order_payment_status', {id: order.id}) }}">
+                        {# CASH PAYMENT CONFIRMATION #}
+                        {% if isCash and order.paymentStatus == 'Pending' %}
 
-                                <input type="hidden"
-                                       name="_token"
-                                       value="{{ csrf_token('update_payment_status_' ~ order.id) }}">
+                            <form
+                                method="post"
+                                action="{{ path('admin_order_payment_status', {id: order.id}) }}"
+                            >
 
-                                <button type="submit"
-                                        name="paymentStatus"
-                                        value="Paid"
-                                        onclick="return confirm('Are you sure you want to mark COD Order #{{ order.id }} as Paid?');">
-                                    Mark COD as Paid
+                                <input
+                                    type="hidden"
+                                    name="_token"
+                                    value="{{ csrf_token('update_payment_status_' ~ order.id) }}"
+                                >
+
+                                <button
+                                    type="submit"
+                                    name="paymentStatus"
+                                    value="Paid"
+                                    onclick="return confirm('Are you sure you have received cash payment for Order #{{ order.id }}?');"
+                                >
+                                    {% if isWalkIn %}
+                                        Mark Cash as Paid
+                                    {% else %}
+                                        Mark COD as Paid
+                                    {% endif %}
                                 </button>
+
                             </form>
+
                         {% endif %}
 
+                        {# UNDO PAYMENT CONFIRMATION #}
                         {% if order.paymentStatus == 'Paid' %}
-                            <form method="post"
-                                  action="{{ path('admin_order_undo_payment', {id: order.id}) }}"
-                                  onsubmit="return confirm('Are you sure you want to undo the payment confirmation for Order #{{ order.id }}?');">
 
-                                <input type="hidden"
-                                       name="_token"
-                                       value="{{ csrf_token('undo_payment_' ~ order.id) }}">
+                            <form
+                                method="post"
+                                action="{{ path('admin_order_undo_payment', {id: order.id}) }}"
+                                onsubmit="return confirm('Are you sure you want to undo the payment confirmation for Order #{{ order.id }}?');"
+                            >
+
+                                <input
+                                    type="hidden"
+                                    name="_token"
+                                    value="{{ csrf_token('undo_payment_' ~ order.id) }}"
+                                >
 
                                 <button type="submit" class="undo-button">
                                     Undo Payment
                                 </button>
+
                             </form>
+
                         {% endif %}
 
                     </div>
 
-                    <form method="post"
-                          action="{{ path('admin_order_status', {id: order.id}) }}"
-                          class="delivery-actions">
+                    {# ORDER STATUS MANAGEMENT #}
+                    <form
+                        method="post"
+                        action="{{ path('admin_order_status', {id: order.id}) }}"
+                        class="delivery-actions"
+                    >
 
-                        <input type="hidden"
-                               name="_token"
-                               value="{{ csrf_token('update_order_status_' ~ order.id) }}">
+                        <input
+                            type="hidden"
+                            name="_token"
+                            value="{{ csrf_token('update_order_status_' ~ order.id) }}"
+                        >
 
-                        <label for="status-{{ order.id }}">Update status:</label>
+                        <label for="status-{{ order.id }}">
+                            Update status:
+                        </label>
 
                         <select id="status-{{ order.id }}" name="status">
-                            {% for status in [
-                                'Pending',
-                                'Preparing',
-                                'Out for Delivery',
-                                'Delivered',
-                                'Cancelled'
-                            ] %}
-                                <option value="{{ status }}"
-                                    {% if order.status == status %}selected{% endif %}>
+
+                            {% if isWalkIn %}
+                                {% set allowedStatuses = [
+                                    'Pending',
+                                    'Preparing',
+                                    'Ready for Pickup',
+                                    'Picked Up',
+                                    'Cancelled'
+                                ] %}
+                            {% else %}
+                                {% set allowedStatuses = [
+                                    'Pending',
+                                    'Preparing',
+                                    'Out for Delivery',
+                                    'Delivered',
+                                    'Cancelled'
+                                ] %}
+                            {% endif %}
+
+                            {% for status in allowedStatuses %}
+                                <option
+                                    value="{{ status }}"
+                                    {% if order.status == status %}selected{% endif %}
+                                >
                                     {{ status }}
                                 </option>
                             {% endfor %}
+
                         </select>
 
-                        <button type="submit">Save Status</button>
+                        <button type="submit">
+                            Save Status
+                        </button>
+
                     </form>
 
                 </section>
+
             {% else %}
-                <div class="empty">No orders have been placed yet.</div>
+
+                <div class="empty">
+                    No orders have been placed yet.
+                </div>
+
             {% endfor %}
 
         </div>

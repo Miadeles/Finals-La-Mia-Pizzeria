@@ -1,3 +1,4 @@
+
 {% extends 'base.html.twig' %}
 
 {% block title %}Home{% endblock %}
@@ -19,10 +20,93 @@
 
         <section class="dashboard-overview">
 
-            <article class="dashboard-card">
-                <h2>Welcome</h2>
-                <p>This is the home page of La Mia Pizzeria.</p>
-            </article>
+            {# PROMOTIONAL POSTER #}
+            <div class="home-promo">
+                <a href="{{ app.user ? path('app_menu') : path('app_login') }}"
+                   aria-label="Browse the La Mia Pizzeria menu">
+                    <img
+                        src="{{ asset('images/la-mia-home-banner.png') }}"
+                        alt="La Mia Pizzeria - Order delicious pizza"
+                        class="home-promo-image"
+                    >
+                </a>
+            </div>
+
+            {# FEATURED PIZZAS #}
+            <section class="featured-section">
+
+                <div class="featured-heading">
+                    <h2>Our Featured Pizzas</h2>
+                    <p>Freshly baked favorites made with love.</p>
+                </div>
+
+                <div class="featured-grid">
+
+                    {% for pizza in featuredPizzas|default([]) %}
+
+                        <article class="featured-card">
+
+                            {% if pizza.image %}
+                                <img
+                                    src="{{ asset('images/' ~ pizza.image) }}"
+                                    alt="{{ pizza.name }}"
+                                    class="featured-image"
+                                >
+                            {% else %}
+                                <div class="featured-placeholder"></div>
+                            {% endif %}
+
+                            <div class="featured-card-body">
+
+                                <h3>{{ pizza.name }}</h3>
+
+                                <p class="featured-description">
+                                    {{ (pizza.description ?: 'Freshly baked and made with love.')|slice(0, 110) }}
+                                </p>
+
+
+                                <div class="featured-prices">
+
+                                    <div class="price-option">
+                                        <span class="price-size">SMALL</span>
+                                        <span class="price-amount">₱{{ pizza.smallPrice }}</span>
+                                    </div>
+
+                                    <div class="price-option">
+                                        <span class="price-size">MEDIUM</span>
+                                        <span class="price-amount">₱{{ pizza.mediumPrice }}</span>
+                                    </div>
+
+                                    <div class="price-option">
+                                        <span class="price-size">LARGE</span>
+                                        <span class="price-amount">₱{{ pizza.largePrice }}</span>
+                                    </div>
+
+                                </div>
+
+                                <a
+                                    href="{{ app.user ? path('app_menu') : path('app_login') }}"
+                                    class="featured-button"
+                                >
+                                    View Menu &rarr;
+                                </a>
+
+                            </div>
+
+                        </article>
+
+                    {% else %}
+
+                        <p class="featured-empty">
+                            Featured pizzas are coming soon!
+                        </p>
+
+                    {% endfor %}
+
+                </div>
+
+            </section>
+
 
         </section>
 
@@ -30,13 +114,14 @@
 
 </div>
 
+
 <style>
     .dashboard-header {
         margin-bottom: 30px;
     }
 
     .dashboard-header h1 {
-        margin: 0 0 8px 0;
+        margin: 0 0 8px;
         font-size: 28px;
         font-weight: 600;
     }
@@ -52,23 +137,187 @@
         gap: 20px;
     }
 
-    .dashboard-card {
-        padding: 24px;
-        background-color: #181818;
-        border: 1px solid #292929;
-        border-radius: 10px;
+    /* FEATURED PIZZAS SECTION */
+
+    .featured-section {
+        margin: 20px 0 40px;
     }
 
-    .dashboard-card h2 {
-        margin: 0 0 10px 0;
+    .featured-heading {
+        margin-bottom: 24px;
+    }
+
+    .featured-heading h2 {
         color: #ffffff;
-        font-size: 18px;
+        font-size: 26px;
+        font-weight: 700;
+        margin: 0 0 8px;
     }
 
-    .dashboard-card p {
+    .featured-heading p {
+        color: #a8a8a8;
+        font-size: 14px;
         margin: 0;
+    }
+
+    /* PIZZA GRID */
+
+    .featured-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 20px;
+    }
+
+    /* PIZZA CARDS */
+
+    .featured-card {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        background: #1c1c1c;
+        border: 1px solid #303030;
+        border-radius: 14px;
+        overflow: hidden;
+        transition: transform 0.2s ease, border-color 0.2s ease;
+    }
+
+    .featured-card:hover {
+        transform: translateY(-5px);
+        border-color: #b72d2d;
+    }
+
+    /* PIZZA IMAGES */
+
+    .featured-image {
+        display: block;
+        width: 100%;
+        height: 210px;
+        object-fit: cover;
+    }
+
+    .featured-placeholder {
+        height: 210px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #292929;
+    }
+
+    /* CARD CONTENT */
+
+    .featured-card-body {
+        display: flex;
+        flex-direction: column;
+        flex: 1;
+        padding: 22px;
+    }
+
+    .featured-card h3 {
+        color: #ffffff;
+        font-size: 19px;
+        font-weight: 600;
+        margin: 0 0 12px;
+    }
+
+    .featured-description {
+        color: #aaaaaa;
+        font-size: 14px;
+        line-height: 1.6;
+        margin-bottom: 16px;
+        min-height: 45px;
+    }
+
+    /* PIZZA PRICE BOXES */
+
+    .featured-prices {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 8px;
+        margin-bottom: 20px;
+    }
+
+    .price-option {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        min-width: 0;
+        padding: 12px 4px;
+        background: #292929;
+        border: 1px solid #383838;
+        border-radius: 8px;
+        text-align: center;
+    }
+
+    .price-size {
+        color: #aaaaaa;
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: 0.5px;
+    }
+
+    .price-amount {
+        color: #f0d5a6;
+        font-size: 15px;
+        font-weight: 700;
+    }
+
+    /* VIEW MENU BUTTON */
+
+    .featured-button {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        align-self: stretch;
+        margin-top: auto;
+        padding: 13px 18px;
+        background: #b72d2d;
+        color: #ffffff;
+        text-decoration: none;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 700;
+        transition: background-color 0.2s ease,
+                    transform 0.2s ease;
+    }
+
+    .featured-button:hover {
+        background: #d13939;
+        color: #ffffff;
+        text-decoration: none;
+        transform: translateY(-2px);
+    }
+
+    .featured-button:focus-visible {
+        outline: 2px solid #ffffff;
+        outline-offset: 3px;
+    }
+
+    .featured-empty {
         color: #a8a8a8;
     }
+
+    /* RESPONSIVE DESIGN */
+
+    @media (max-width: 1100px) {
+        .featured-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+    }
+
+    @media (max-width: 768px) {
+        .featured-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    @media (max-width: 400px) {
+        .featured-prices {
+            grid-template-columns: 1fr;
+        }
+    }
 </style>
+
 
 {% endblock %}

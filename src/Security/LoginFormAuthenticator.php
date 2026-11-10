@@ -42,16 +42,42 @@ class LoginFormAuthenticator extends AbstractLoginFormAuthenticator
         );
     }
 
-    public function onAuthenticationSuccess(Request $request, TokenInterface $token, string $firewallName): ?Response
-    {
-        if ($targetPath = $this->getTargetPath($request->getSession(), $firewallName)) {
-            return new RedirectResponse($targetPath);
+    public function onAuthenticationSuccess(
+        Request $request,
+        TokenInterface $token,
+        string $firewallName
+    ): ?Response {
+        $user = $token->getUser();
+
+        // Redirect users to the page they originally requested,
+        // but only if they are authorized to access it.
+        if ($targetPath = $this->getTargetPath(
+            $request->getSession(),
+            $firewallName
+        )) {
+            if (
+                !str_contains($targetPath, '/admin') &&
+                !str_contains($targetPath, '/dashboard') &&
+                !str_contains($targetPath, '/product') &&
+                !str_contains($targetPath, '/category')
+            ) {
+                return new RedirectResponse($targetPath);
+            }
         }
 
-        // For example:
-        // return new RedirectResponse($this->urlGenerator->generate('some_route'));
-        return new RedirectResponse($this->urlGenerator->generate('dashboard'));
+        // Administrators go to the Admin Dashboard.
+        if (in_array('ROLE_ADMIN', $user->getRoles(), true)) {
+            return new RedirectResponse(
+                $this->urlGenerator->generate('dashboard')
+            );
+        }
+
+        // Staff and customers go to the homepage.
+        return new RedirectResponse(
+            $this->urlGenerator->generate('app_home')
+        );
     }
+
 
     protected function getLoginUrl(Request $request): string
     {

@@ -1,0 +1,509 @@
+
+{% extends 'base.html.twig' %}
+
+{% block title %}User Management | La Mia Pizzeria{% endblock %}
+
+{% block body %}
+
+<style>
+    /* PAGE */
+    .user-management-page {
+        width: 100%;
+        color: #ffffff;
+    }
+
+    /* HEADER */
+    .user-management-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 24px;
+        margin-bottom: 28px;
+    }
+
+    .user-management-heading {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .user-management-title {
+        font-size: 32px;
+        font-weight: 600;
+        color: #ffffff;
+        margin: 0 0 8px;
+    }
+
+    .user-management-description {
+        color: #aaaaaa;
+        font-size: 15px;
+        margin: 0;
+    }
+
+    /* CREATE ACCOUNT BUTTON */
+    .user-create-button,
+    .user-create-button:visited {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        background: #b91c1c;
+        color: #ffffff !important;
+        padding: 13px 20px;
+        border-radius: 6px;
+        text-decoration: none !important;
+        font-size: 14px;
+        font-weight: 600;
+        white-space: nowrap;
+        flex-shrink: 0;
+        transition: background-color 0.2s ease;
+    }
+
+    .user-create-button:hover,
+    .user-create-button:focus {
+        background: #991b1b;
+        color: #ffffff !important;
+        text-decoration: none !important;
+    }
+
+    /* TABLE CONTAINER */
+    .user-table-container {
+        width: 100%;
+        overflow-x: auto;
+        border: 1px solid #333333;
+        border-radius: 10px;
+        background: #1b1b1b;
+    }
+
+    /* USER TABLE */
+    .user-table {
+        width: 100%;
+        min-width: 950px;
+        border-collapse: collapse;
+        color: #ffffff;
+        font-size: 14px;
+    }
+
+    .user-table thead {
+        background: #292929;
+    }
+
+    .user-table th {
+        padding: 16px;
+        text-align: left;
+        font-weight: 600;
+        color: #ffffff;
+        white-space: nowrap;
+    }
+
+    .user-table td {
+        padding: 16px;
+        border-top: 1px solid #333333;
+        vertical-align: middle;
+    }
+
+    .user-table tbody tr:hover {
+        background: #242424;
+    }
+
+    .user-table .user-email {
+        overflow-wrap: anywhere;
+    }
+
+    /* ROLE COLORS */
+    .user-role-admin {
+        color: #f87171;
+        font-weight: 600;
+    }
+
+    .user-role-staff {
+        color: #facc15;
+        font-weight: 600;
+    }
+
+    .user-role-customer {
+        color: #60a5fa;
+        font-weight: 600;
+    }
+
+    /* STATUS COLORS */
+    .user-status-active {
+        color: #4ade80;
+        font-weight: 600;
+    }
+
+    .user-status-inactive {
+        color: #f87171;
+        font-weight: 600;
+    }
+
+    /* ACTIONS CONTAINER */
+    .user-actions {
+        display: flex;
+        align-items: center;
+        flex-wrap: nowrap;
+        gap: 8px;
+    }
+
+    .user-actions form {
+        display: inline-flex;
+        align-items: center;
+        margin: 0;
+    }
+
+    /* EDIT BUTTON */
+    .user-edit-button,
+    .user-edit-button:visited {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 70px;
+        height: 36px;
+        background: #b91c1c;
+        color: #ffffff !important;
+        padding: 0 12px;
+        border-radius: 5px;
+        text-decoration: none !important;
+        font-size: 13px;
+        font-weight: 600;
+        white-space: nowrap;
+        transition: background-color 0.2s ease;
+    }
+
+    .user-edit-button:hover,
+    .user-edit-button:focus {
+        background: #991b1b;
+        color: #ffffff !important;
+        text-decoration: none !important;
+    }
+
+    /* ENABLE / DISABLE BUTTONS */
+    .user-status-button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 80px;
+        height: 36px;
+        padding: 0 12px;
+        border: none;
+        border-radius: 5px;
+        color: #ffffff;
+        font-size: 13px;
+        font-weight: 600;
+        white-space: nowrap;
+        cursor: pointer;
+        transition: background-color 0.2s ease;
+    }
+
+    /* DISABLE BUTTON */
+    .user-disable-button {
+        background: #7f1d1d;
+    }
+
+    .user-disable-button:hover {
+        background: #991b1b;
+        color: #ffffff;
+    }
+
+    /* ENABLE BUTTON */
+    .user-enable-button {
+        background: #166534;
+    }
+
+    .user-enable-button:hover {
+        background: #15803d;
+        color: #ffffff;
+    }
+
+    /* DISABLED BUTTON FOR CURRENT ADMIN */
+    .user-status-button:disabled {
+        background: #444444;
+        color: #aaaaaa;
+        cursor: not-allowed;
+        opacity: 0.8;
+    }
+
+    /* DELETE BUTTON */
+    .user-delete-button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 75px;
+        height: 36px;
+        padding: 0 12px;
+        border: 1px solid #dc2626;
+        border-radius: 5px;
+        background: transparent;
+        color: #f87171;
+        font-size: 13px;
+        font-weight: 600;
+        white-space: nowrap;
+        cursor: pointer;
+        transition: background-color 0.2s ease;
+    }
+
+    .user-delete-button:hover {
+        background: #dc2626;
+        color: #ffffff;
+    }
+
+    /* EMPTY TABLE MESSAGE */
+    .user-empty-message {
+        text-align: center;
+        padding: 30px !important;
+        color: #aaaaaa;
+    }
+
+    /* RESPONSIVE LAYOUT */
+    @media (max-width: 650px) {
+        .user-management-header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 16px;
+        }
+
+        .user-management-title {
+            font-size: 26px;
+        }
+
+        .user-create-button {
+            width: 100%;
+        }
+    }
+</style>
+
+<div class="dashboard-container">
+
+    {# PERMANENT ADMIN SIDEBAR #}
+    <aside class="sidebar">
+        {% include 'sidebar/index.html.twig' %}
+    </aside>
+
+    {# MAIN CONTENT #}
+    <main class="dashboard-content">
+
+        <div class="user-management-page">
+
+            {# PAGE HEADER #}
+            <div class="user-management-header">
+
+                <div class="user-management-heading">
+
+                    <h1 class="user-management-title">
+                        User Management
+                    </h1>
+
+                    <p class="user-management-description">
+                        Manage administrator, staff, and customer accounts.
+                    </p>
+
+                </div>
+
+                <a href="{{ path('admin_users_new') }}"
+                   class="user-create-button">
+                    + Create Admin / Staff Account
+                </a>
+
+            </div>
+
+            {# SUCCESS MESSAGES #}
+            {% for message in app.flashes('success') %}
+
+                <div class="alert alert-success">
+                    {{ message }}
+                </div>
+
+            {% endfor %}
+
+            {# ERROR MESSAGES #}
+            {% for message in app.flashes('error') %}
+
+                <div class="alert alert-danger">
+                    {{ message }}
+                </div>
+
+            {% endfor %}
+
+            {# USER TABLE #}
+            <div class="user-table-container">
+
+                <table class="user-table">
+
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Name</th>
+                            <th>Email</th>
+                            <th>Role</th>
+                            <th>Created</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+
+                        {% for user in users %}
+
+                            <tr>
+
+                                {# USER ID #}
+                                <td>
+                                    {{ user.id }}
+                                </td>
+
+                                {# FULL NAME #}
+                                <td>
+                                    {{ user.firstName }} {{ user.lastName }}
+                                </td>
+
+                                {# EMAIL ADDRESS #}
+                                <td class="user-email">
+                                    {{ user.email }}
+                                </td>
+
+                                {# USER ROLE #}
+                                <td>
+
+                                    {% if 'ROLE_ADMIN' in user.roles %}
+
+                                        <span class="user-role-admin">
+                                            Admin
+                                        </span>
+
+                                    {% elseif 'ROLE_STAFF' in user.roles %}
+
+                                        <span class="user-role-staff">
+                                            Staff
+                                        </span>
+
+                                    {% else %}
+
+                                        <span class="user-role-customer">
+                                            Customer
+                                        </span>
+
+                                    {% endif %}
+
+                                </td>
+
+                                {# DATE CREATED #}
+                                <td>
+                                    {{ user.createdAt|date('M d, Y') }}
+                                </td>
+
+                                {# ACCOUNT STATUS #}
+                                <td>
+
+                                    {% if user.active %}
+
+                                        <span class="user-status-active">
+                                            Active
+                                        </span>
+
+                                    {% else %}
+
+                                        <span class="user-status-inactive">
+                                            Inactive
+                                        </span>
+
+                                    {% endif %}
+
+                                </td>
+
+                                {# ACCOUNT ACTIONS #}
+                                <td>
+
+                                    <div class="user-actions">
+
+                                        {# EDIT ACCOUNT #}
+                                        <a href="{{ path('admin_users_edit', {'id': user.id}) }}"
+                                           class="user-edit-button">
+                                            Edit
+                                        </a>
+
+                                        {# CURRENT ADMIN CANNOT DISABLE OR DELETE OWN ACCOUNT #}
+                                        {% if app.user and app.user.id == user.id %}
+
+                                            <button type="button"
+                                                    class="user-status-button"
+                                                    disabled
+                                                    title="You cannot disable your own account">
+                                                Disable
+                                            </button>
+
+                                        {% else %}
+
+                                            {# ENABLE / DISABLE ACCOUNT #}
+                                            <form method="post"
+                                                  action="{{ path('admin_users_toggle_status', {'id': user.id}) }}"
+                                                  onsubmit="return confirm('Are you sure you want to {{ user.active ? 'disable' : 'enable' }} this account?');">
+
+                                                <input type="hidden"
+                                                       name="_token"
+                                                       value="{{ csrf_token('toggle_status_' ~ user.id) }}">
+
+                                                {% if user.active %}
+
+                                                    <button type="submit"
+                                                            class="user-status-button user-disable-button">
+                                                        Disable
+                                                    </button>
+
+                                                {% else %}
+
+                                                    <button type="submit"
+                                                            class="user-status-button user-enable-button">
+                                                        Enable
+                                                    </button>
+
+                                                {% endif %}
+
+                                            </form>
+
+                                            {# DELETE ACCOUNT #}
+                                            <form method="post"
+                                                  action="{{ path('admin_users_delete', {'id': user.id}) }}"
+                                                  onsubmit="return confirm('Permanently delete this user account? This action cannot be undone.');">
+
+                                                <input type="hidden"
+                                                       name="_token"
+                                                       value="{{ csrf_token('delete_user_' ~ user.id) }}">
+
+                                                <button type="submit"
+                                                        class="user-delete-button">
+                                                    Delete
+                                                </button>
+
+                                            </form>
+
+                                        {% endif %}
+
+                                    </div>
+
+                                </td>
+
+                            </tr>
+
+                        {% else %}
+
+                            {# NO USER ACCOUNTS #}
+                            <tr>
+                                <td colspan="7" class="user-empty-message">
+                                    No user accounts found.
+                                </td>
+                            </tr>
+
+                        {% endfor %}
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </div>
+
+    </main>
+
+</div>
+
+{% endblock %}

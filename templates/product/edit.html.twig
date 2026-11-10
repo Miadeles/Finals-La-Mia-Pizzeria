@@ -1,118 +1,354 @@
 
 {% extends 'base.html.twig' %}
 
-{% block title %}Edit Product{% endblock %}
+{% block title %}Edit Product | La Mia Pizzeria{% endblock %}
 
 {% block stylesheets %}
     {{ parent() }}
+
     <style>
-       .edit-container {
-            max-width: 900px;
-            margin: 30px auto;
-            padding: 25px;
-            background: #fff;
-            color: #212529;
-            border-radius: 10px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        .product-edit-container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 0 0 25px;
         }
 
-        .edit-container label {
+        .product-edit-title {
+            color: #ffffff;
+            font-size: 32px;
+            font-weight: 600;
+            margin: 0 0 6px;
+        }
+
+        .product-edit-description {
+            color: #aaaaaa;
+            margin-bottom: 18px;
+        }
+
+        .product-edit-card {
+            background: #1b1b1b;
+            border: 1px solid #333333;
+            border-radius: 12px;
+            padding: 22px 25px;
+        }
+
+        .product-edit-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 16px;
+            margin-bottom: 16px;
+        }
+
+        .product-edit-price-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 15px;
+        }
+
+        .product-edit-field {
+            min-width: 0;
+        }
+
+        .product-edit-field label {
             display: block;
-            color: #212529 !important;
+            color: #ffffff;
+            font-size: 14px;
             font-weight: 600;
             margin-bottom: 6px;
         }
 
-        .edit-container .form-control {
+        .product-edit-field input,
+        .product-edit-field select,
+        .product-edit-field textarea {
             display: block;
             width: 100%;
+            box-sizing: border-box;
+            padding: 10px 12px;
+
+            background-color: #2b2b2b;
+            color: #ffffff;
+
+            border: 1px solid #484848;
+            border-radius: 6px;
+            font-size: 15px;
+
+            color-scheme: dark;
+        }
+
+        .product-edit-field input::placeholder,
+        .product-edit-field textarea::placeholder {
+            color: #aaaaaa;
+        }
+
+        .product-edit-field select option {
+            background-color: #2b2b2b;
+            color: #ffffff;
+        }
+
+        .product-edit-field input:focus,
+        .product-edit-field select:focus,
+        .product-edit-field textarea:focus {
+            outline: 2px solid #b91c1c;
+            outline-offset: 1px;
+        }
+
+        .product-edit-field textarea {
+            min-height: 65px;
+            resize: vertical;
+        }
+
+        .product-edit-errors {
+            color: #f87171;
+            font-size: 14px;
+            margin-top: 6px;
+        }
+
+        .product-edit-errors ul {
+            margin: 0;
+            padding-left: 18px;
+        }
+
+        .product-edit-section-title {
+            color: #ffffff;
+            font-size: 19px;
+            font-weight: 600;
+            margin: 4px 0 14px;
+        }
+
+        .product-edit-actions {
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-top: 20px;
+        }
+
+        .product-edit-save {
+            background: #b91c1c;
+            color: #ffffff;
+            border: none;
+            border-radius: 6px;
+            padding: 11px 22px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .product-edit-save:hover {
+            background: #991b1b;
+        }
+
+        .product-edit-cancel,
+        .product-edit-cancel:visited {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 11px 22px;
+            background: #333333;
+            color: #ffffff;
+            border: 1px solid #555555;
+            border-radius: 6px;
+            font-size: 15px;
+            font-weight: 600;
+            text-decoration: none !important;
+        }
+
+        .product-edit-cancel:hover,
+        .product-edit-cancel:focus {
+            background: #444444;
+            color: #ffffff;
+            text-decoration: none !important;
+        }
+
+        .product-edit-delete {
+            display: flex;
+            justify-content: flex-end;
+            margin-top: 14px;
+            padding-top: 14px;
+            border-top: 1px solid #383838;
+        }
+
+        .product-edit-delete form {
+            margin: 0;
+        }
+
+        @media (max-width: 768px) {
+            .product-edit-card {
+                padding: 20px;
+            }
+
+            .product-edit-grid,
+            .product-edit-price-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .product-edit-actions,
+            .product-edit-delete {
+                justify-content: flex-start;
+            }
         }
     </style>
 {% endblock %}
 
 {% block body %}
-    <div class="dashboard-container">
-        <main class="dashboard-content">
-            <div class="edit-container">
-                <h1 class="mb-4">Edit Product</h1>
+
+<div class="dashboard-container">
+
+    {# Permanent Admin Sidebar #}
+    <aside class="sidebar">
+        {% include 'sidebar/index.html.twig' %}
+    </aside>
+
+    <main class="dashboard-content">
+
+        <div class="product-edit-container">
+
+            <h1 class="product-edit-title">
+                Edit Product
+            </h1>
+
+            <p class="product-edit-description">
+                Update the information and prices for
+                {{ product.name }}.
+            </p>
+
+            <div class="product-edit-card">
 
                 {{ form_start(form) }}
 
-                {{ form_errors(form) }}
-
-                <div class="form-row">
-                    <div class="form-group col-md-6">
-                        {{ form_label(form.name, 'Product Name') }}
-                        {{ form_widget(form.name, {'attr': {'class': 'form-control'}}) }}
-                        {{ form_errors(form.name) }}
+                    <div class="product-edit-errors">
+                        {{ form_errors(form) }}
                     </div>
 
-                    <div class="form-group col-md-6">
-                        {{ form_label(form.category, 'Category') }}
-                        {{ form_widget(form.category, {'attr': {'class': 'form-control'}}) }}
-                        {{ form_errors(form.category) }}
-                    </div>
-                </div>
+                    {# Product Name and Category #}
+                    <div class="product-edit-grid">
 
-                <div class="form-group">
-                    {{ form_label(form.description, 'Description') }}
-                    {{ form_widget(form.description, {'attr': {'class': 'form-control', 'rows': 3}}) }}
-                    {{ form_errors(form.description) }}
-                </div>
+                        <div class="product-edit-field">
+                            {{ form_label(form.name, 'Product Name') }}
+                            {{ form_widget(form.name) }}
 
-                <div class="form-row">
-                    <div class="form-group col-md-6">
-                        {{ form_label(form.price, 'Base Price (legacy)') }}
-                        {{ form_widget(form.price, {'attr': {'class': 'form-control'}}) }}
-                        {{ form_errors(form.price) }}
-                    </div>
+                            <div class="product-edit-errors">
+                                {{ form_errors(form.name) }}
+                            </div>
+                        </div>
 
-                    <div class="form-group col-md-6">
-                        {{ form_label(form.image, 'Image Filename') }}
-                        {{ form_widget(form.image, {'attr': {'class': 'form-control'}}) }}
-                        {{ form_errors(form.image) }}
-                    </div>
-                </div>
+                        <div class="product-edit-field">
+                            {{ form_label(form.category, 'Category') }}
+                            {{ form_widget(form.category) }}
 
-                <h5 class="mt-3">Product Size Prices</h5>
+                            <div class="product-edit-errors">
+                                {{ form_errors(form.category) }}
+                            </div>
+                        </div>
 
-                <div class="form-row">
-                    <div class="form-group col-md-4">
-                        {{ form_label(form.smallPrice, 'Small Price (₱)') }}
-                        {{ form_widget(form.smallPrice, {'attr': {'class': 'form-control'}}) }}
-                        {{ form_errors(form.smallPrice) }}
                     </div>
 
-                    <div class="form-group col-md-4">
-                        {{ form_label(form.mediumPrice, 'Medium Price (₱)') }}
-                        {{ form_widget(form.mediumPrice, {'attr': {'class': 'form-control'}}) }}
-                        {{ form_errors(form.mediumPrice) }}
+                    {# Description #}
+                    <div class="product-edit-field"
+                         style="margin-bottom: 16px;">
+
+                        {{ form_label(form.description, 'Description') }}
+
+                        {{ form_widget(form.description, {
+                            'attr': {
+                                'rows': 2
+                            }
+                        }) }}
+
+                        <div class="product-edit-errors">
+                            {{ form_errors(form.description) }}
+                        </div>
+
                     </div>
 
-                    <div class="form-group col-md-4">
-                        {{ form_label(form.largePrice, 'Large Price (₱)') }}
-                        {{ form_widget(form.largePrice, {'attr': {'class': 'form-control'}}) }}
-                        {{ form_errors(form.largePrice) }}
+                    {# Base Price and Image #}
+                    <div class="product-edit-grid">
+
+                        <div class="product-edit-field">
+                            {{ form_label(form.price, 'Base Price (legacy)') }}
+                            {{ form_widget(form.price) }}
+
+                            <div class="product-edit-errors">
+                                {{ form_errors(form.price) }}
+                            </div>
+                        </div>
+
+                        <div class="product-edit-field">
+                            {{ form_label(form.image, 'Image Filename') }}
+                            {{ form_widget(form.image) }}
+
+                            <div class="product-edit-errors">
+                                {{ form_errors(form.image) }}
+                            </div>
+                        </div>
+
                     </div>
-                </div>
 
-                <div class="mt-4">
-                    <button type="submit" class="btn btn-success">
-                        Save Changes
-                    </button>
+                    {# Product Size Prices #}
+                    <h2 class="product-edit-section-title">
+                        Product Size Prices
+                    </h2>
 
-                    <a href="{{ path('app_product_index') }}"
-                       class="btn btn-secondary">
-                        Back to Products
-                    </a>
-                </div>
+                    <div class="product-edit-price-grid">
+
+                        <div class="product-edit-field">
+                            {{ form_label(form.smallPrice, 'Small Price (₱)') }}
+                            {{ form_widget(form.smallPrice) }}
+
+                            <div class="product-edit-errors">
+                                {{ form_errors(form.smallPrice) }}
+                            </div>
+                        </div>
+
+                        <div class="product-edit-field">
+                            {{ form_label(form.mediumPrice, 'Medium Price (₱)') }}
+                            {{ form_widget(form.mediumPrice) }}
+
+                            <div class="product-edit-errors">
+                                {{ form_errors(form.mediumPrice) }}
+                            </div>
+                        </div>
+
+                        <div class="product-edit-field">
+                            {{ form_label(form.largePrice, 'Large Price (₱)') }}
+                            {{ form_widget(form.largePrice) }}
+
+                            <div class="product-edit-errors">
+                                {{ form_errors(form.largePrice) }}
+                            </div>
+                        </div>
+
+                    </div>
+
+                    {# Save and Cancel Buttons #}
+                    <div class="product-edit-actions">
+
+                        <a href="{{ path('app_product_index') }}"
+                           class="product-edit-cancel">
+                            Cancel
+                        </a>
+
+                        <button type="submit"
+                                class="product-edit-save">
+                            Save Changes
+                        </button>
+
+                    </div>
 
                 {{ form_end(form) }}
 
-                <div class="mt-3">
+                {# Existing Delete Functionality #}
+                <div class="product-edit-delete">
                     {{ include('product/_delete_form.html.twig') }}
                 </div>
+
             </div>
-        </main>
-    </div>
+
+        </div>
+
+    </main>
+
+</div>
+
 {% endblock %}

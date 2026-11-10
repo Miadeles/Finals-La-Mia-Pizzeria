@@ -1,0 +1,282 @@
+
+{% extends 'base.html.twig' %}
+
+{% block title %}Create Account | La Mia Pizzeria{% endblock %}
+
+{% block body %}
+
+<style>
+    .create-account-page {
+        width: 100%;
+        color: #ffffff;
+    }
+
+    .create-account-container {
+        max-width: 1000px;
+        margin: 0 auto;
+    }
+
+    .create-account-title {
+        font-size: 32px;
+        font-weight: 500;
+        margin: 0 0 10px;
+        color: #ffffff;
+    }
+
+    .create-account-description {
+        color: #aaaaaa;
+        font-size: 15px;
+        margin-bottom: 28px;
+    }
+
+    .create-account-card {
+        background: #1b1b1b;
+        border: 1px solid #333333;
+        border-radius: 12px;
+        padding: 30px;
+    }
+
+    .create-account-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 24px;
+    }
+
+    .create-account-field {
+        min-width: 0;
+    }
+
+    .create-account-field label {
+        display: block;
+        color: #ffffff;
+        font-weight: 600;
+        margin-bottom: 8px;
+    }
+
+    .create-account-field input,
+    .create-account-field select {
+        display: block;
+        width: 100%;
+        box-sizing: border-box;
+        padding: 13px 14px;
+        background: #ffffff;
+        color: #111111;
+        border: 1px solid #555555;
+        border-radius: 6px;
+        font-size: 15px;
+    }
+
+    .create-account-field input:focus,
+    .create-account-field select:focus {
+        outline: 2px solid #b91c1c;
+        outline-offset: 1px;
+    }
+
+    .create-account-errors {
+        color: #f87171;
+        font-size: 14px;
+        margin-top: 8px;
+    }
+
+    .create-account-errors ul {
+        padding-left: 18px;
+        margin: 0;
+    }
+
+    .create-account-alert {
+        background: #7f1d1d;
+        border: 1px solid #ef4444;
+        color: #ffffff;
+        padding: 14px;
+        border-radius: 6px;
+        margin-bottom: 20px;
+    }
+
+    .create-account-actions {
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        flex-wrap: wrap;
+        gap: 16px;
+        margin-top: 30px;
+    }
+
+    .create-account-cancel,
+    .create-account-cancel:visited {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 13px 24px;
+        background: #333333;
+        color: #ffffff;
+        border: 1px solid #555555;
+        border-radius: 6px;
+        font-size: 15px;
+        font-weight: 600;
+        text-decoration: none !important;
+        transition: background-color 0.2s ease;
+    }
+
+    .create-account-cancel:hover,
+    .create-account-cancel:focus {
+        background: #444444;
+        color: #ffffff;
+        text-decoration: none !important;
+    }
+
+    .create-account-submit {
+        background: #b91c1c;
+        color: #ffffff;
+        border: none;
+        border-radius: 6px;
+        padding: 13px 24px;
+        font-size: 15px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background-color 0.2s ease;
+    }
+
+    .create-account-submit:hover,
+    .create-account-submit:focus {
+        background: #991b1b;
+    }
+
+    @media (max-width: 650px) {
+        .create-account-card {
+            padding: 20px;
+        }
+
+        .create-account-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .create-account-title {
+            font-size: 26px;
+        }
+
+        .create-account-actions {
+            justify-content: flex-start;
+        }
+    }
+</style>
+
+<div class="dashboard-container">
+
+    {# PERMANENT ADMIN SIDEBAR #}
+    <aside class="sidebar">
+        {% include 'sidebar/index.html.twig' %}
+    </aside>
+
+    {# MAIN CONTENT #}
+    <main class="dashboard-content">
+
+        <div class="create-account-page">
+
+            <div class="create-account-container">
+
+                <h1 class="create-account-title">
+                    Create Admin / Staff Account
+                </h1>
+
+                <p class="create-account-description">
+                    Enter the details for the new account.
+                </p>
+
+                <div class="create-account-card">
+
+                    {# ERROR FLASH MESSAGES #}
+                    {% for message in app.flashes('error') %}
+                        <div class="create-account-alert">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+
+                    {{ form_start(form) }}
+
+                        {# GENERAL FORM ERRORS #}
+                        <div class="create-account-errors">
+                            {{ form_errors(form) }}
+                        </div>
+
+                        <div class="create-account-grid">
+
+                            {# FIRST NAME #}
+                            <div class="create-account-field">
+                                {{ form_label(form.firstName) }}
+                                {{ form_widget(form.firstName) }}
+
+                                <div class="create-account-errors">
+                                    {{ form_errors(form.firstName) }}
+                                </div>
+                            </div>
+
+                            {# LAST NAME #}
+                            <div class="create-account-field">
+                                {{ form_label(form.lastName) }}
+                                {{ form_widget(form.lastName) }}
+
+                                <div class="create-account-errors">
+                                    {{ form_errors(form.lastName) }}
+                                </div>
+                            </div>
+
+                            {# EMAIL ADDRESS #}
+                            <div class="create-account-field">
+                                {{ form_label(form.email) }}
+                                {{ form_widget(form.email) }}
+
+                                <div class="create-account-errors">
+                                    {{ form_errors(form.email) }}
+                                </div>
+                            </div>
+
+                            {# PASSWORD #}
+                            <div class="create-account-field">
+                                {{ form_label(form.plainPassword) }}
+                                {{ form_widget(form.plainPassword) }}
+
+                                <div class="create-account-errors">
+                                    {{ form_errors(form.plainPassword) }}
+                                </div>
+                            </div>
+
+                            {# ACCOUNT ROLE #}
+                            <div class="create-account-field">
+                                {{ form_label(form.accountRole) }}
+                                {{ form_widget(form.accountRole) }}
+
+                                <div class="create-account-errors">
+                                    {{ form_errors(form.accountRole) }}
+                                </div>
+                            </div>
+
+                        </div>
+
+                        {# FORM ACTIONS #}
+                        <div class="create-account-actions">
+
+                            <a href="{{ path('admin_users') }}"
+                               class="create-account-cancel">
+                                Cancel
+                            </a>
+
+                            <button type="submit"
+                                    class="create-account-submit">
+                                Create Account
+                            </button>
+
+                        </div>
+
+                    {{ form_end(form) }}
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </main>
+
+</div>
+
+{% endblock %}

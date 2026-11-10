@@ -17,6 +17,16 @@ final class DashboardController extends AbstractController
         OrderRepository $orderRepository,
         UserRepository $userRepository
     ): Response {
+        // Allow Admin and Staff only.
+        if (
+            !$this->isGranted('ROLE_ADMIN')
+            && !$this->isGranted('ROLE_STAFF')
+        ) {
+            throw $this->createAccessDeniedException(
+                'You do not have permission to access the dashboard.'
+            );
+        }
+
         return $this->render('dashboard/index.html.twig', [
             'controller_name' => 'DashboardController',
             'totalProducts' => $productRepository->count([]),

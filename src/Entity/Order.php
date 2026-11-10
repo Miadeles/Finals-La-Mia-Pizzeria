@@ -12,7 +12,6 @@ use Doctrine\ORM\Mapping as ORM;
 #[ORM\Table(name: '`order`')]
 class Order
 {
-
     #[ORM\ManyToOne(inversedBy: 'orders')]
     #[ORM\JoinColumn(nullable: true, onDelete: 'SET NULL')]
     private ?User $user = null;
@@ -28,8 +27,11 @@ class Order
     #[ORM\Column(length: 30)]
     private ?string $customerPhone = null;
 
-    #[ORM\Column(type: Types::TEXT)]
+    #[ORM\Column(type: Types::TEXT, nullable: true)]
     private ?string $customerAddress = null;
+
+    #[ORM\Column(length: 30, options: ['default' => 'personal'])]
+    private string $orderType = 'personal';
 
     #[ORM\Column]
     private ?int $total = null;
@@ -43,7 +45,7 @@ class Order
     #[ORM\Column(length: 30, options: ['default' => 'Pending'])]
     private ?string $paymentStatus = 'Pending';
 
-    // New payment information fields
+    // Payment information fields
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $paymentAccountName = null;
 
@@ -98,9 +100,25 @@ class Order
         return $this->customerAddress;
     }
 
-    public function setCustomerAddress(string $customerAddress): static
+    public function setCustomerAddress(?string $customerAddress): static
     {
         $this->customerAddress = $customerAddress;
+
+        return $this;
+    }
+
+    public function getOrderType(): string
+    {
+        return $this->orderType;
+    }
+
+    public function setOrderType(string $orderType): static
+    {
+        if (!in_array($orderType, ['personal', 'staff_assisted', 'walk_in'], true)) {
+            throw new \InvalidArgumentException('Invalid order type.');
+        }
+
+        $this->orderType = $orderType;
 
         return $this;
     }
@@ -229,5 +247,4 @@ class Order
 
         return $this;
     }
-
 }

@@ -5,17 +5,32 @@ namespace App\Controller;
 use App\Entity\Order;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
-use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class AdminOrderController extends AbstractController
 {
+    /**
+     * Allow Admin and Staff to manage orders.
+     */
+    private function denyUnlessOrderManager(): void
+    {
+        if (
+            !$this->isGranted('ROLE_ADMIN')
+            && !$this->isGranted('ROLE_STAFF')
+        ) {
+            throw $this->createAccessDeniedException(
+                'You do not have permission to manage orders.'
+            );
+        }
+    }
+
     #[Route('/admin/orders', name: 'admin_orders', methods: ['GET'])]
     public function index(EntityManagerInterface $entityManager): Response
     {
-        $this->denyAccessUnlessGranted('ROLE_ADMIN');
+        $this->denyUnlessOrderManager();
 
         $orders = $entityManager
             ->getRepository(Order::class)
@@ -32,7 +47,7 @@ class AdminOrderController extends AbstractController
         Request $request,
         EntityManagerInterface $entityManager
     ): Response {
-        $this->denyAccessUnlessGranted('ROLE_ADMIN');
+        $this->denyUnlessOrderManager();
 
         $order = $entityManager->getRepository(Order::class)->find($id);
 
@@ -48,16 +63,32 @@ class AdminOrderController extends AbstractController
 
         $status = (string) $request->request->get('status', '');
 
-        $allowedStatuses = [
-            'Pending',
-            'Preparing',
-            'Out for Delivery',
-            'Delivered',
-            'Cancelled',
-        ];
+        // Walk-in orders have an in-store pickup workflow.
+        if ($order->getOrderType() === 'walk_in') {
+            $allowedStatuses = [
+                'Pending',
+                'Preparing',
+                'Ready for Pickup',
+                'Picked Up',
+                'Cancelled',
+            ];
+        } else {
+            // Preserve the existing delivery workflow.
+            $allowedStatuses = [
+                'Pending',
+                'Preparing',
+                'Out for Delivery',
+                'Delivered',
+                'Cancelled',
+            ];
+        }
 
         if (!in_array($status, $allowedStatuses, true)) {
-            $this->addFlash('error', 'Invalid order status.');
+            $this->addFlash(
+                'error',
+                'Invalid status for this order type.'
+            );
+
             return $this->redirectToRoute('admin_orders');
         }
 
@@ -78,7 +109,7 @@ class AdminOrderController extends AbstractController
         Request $request,
         EntityManagerInterface $entityManager
     ): Response {
-        $this->denyAccessUnlessGranted('ROLE_ADMIN');
+        $this->denyUnlessOrderManager();
 
         $order = $entityManager->getRepository(Order::class)->find($id);
 
@@ -96,11 +127,16 @@ class AdminOrderController extends AbstractController
 
         if (!in_array($paymentStatus, ['Paid', 'Rejected'], true)) {
             $this->addFlash('error', 'Invalid payment status.');
+
             return $this->redirectToRoute('admin_orders');
         }
 
         if ($order->getPaymentMethod() === 'COD' && $paymentStatus !== 'Paid') {
-            $this->addFlash('error', 'COD orders can only be marked as Paid.');
+            $this->addFlash(
+                'error',
+                'Cash orders can only be marked as Paid.'
+            );
+
             return $this->redirectToRoute('admin_orders');
         }
 
@@ -121,7 +157,7 @@ class AdminOrderController extends AbstractController
         Request $request,
         EntityManagerInterface $entityManager
     ): Response {
-        $this->denyAccessUnlessGranted('ROLE_ADMIN');
+        $this->denyUnlessOrderManager();
 
         $order = $entityManager->getRepository(Order::class)->find($id);
 
@@ -136,7 +172,11 @@ class AdminOrderController extends AbstractController
         }
 
         if ($order->getPaymentStatus() !== 'Paid') {
-            $this->addFlash('error', 'Only paid orders can be returned to Pending.');
+            $this->addFlash(
+                'error',
+                'Only paid orders can be returned to Pending.'
+            );
+
             return $this->redirectToRoute('admin_orders');
         }
 
@@ -145,7 +185,10 @@ class AdminOrderController extends AbstractController
 
         $this->addFlash(
             'success',
-            sprintf('Payment for Order #%d has been returned to Pending.', $id)
+            sprintf(
+                'Payment for Order #%d has been returned to Pending.',
+                $id
+            )
         );
 
         return $this->redirectToRoute('admin_orders');
@@ -156,24 +199,28 @@ class AdminOrderController extends AbstractController
         int $id,
         EntityManagerInterface $entityManager
     ): Response {
-        $this->denyAccessUnlessGranted('ROLE_ADMIN');
+        $this->denyUnlessOrderManager();
 
         $order = $entityManager->getRepository(Order::class)->find($id);
 
         if (!$order || !$order->getPaymentReceipt()) {
-            throw $this->createNotFoundException('Payment receipt not found.');
+            throw $this->createNotFoundException(
+                'Payment receipt not found.'
+            );
         }
 
         $filename = basename($order->getPaymentReceipt());
+
         $receiptPath = $this->getParameter('kernel.project_dir')
             . '/public/uploads/payment_receipts/'
             . $filename;
 
         if (!is_file($receiptPath)) {
-            throw $this->createNotFoundException('Receipt file does not exist.');
+            throw $this->createNotFoundException(
+                'Receipt file does not exist.'
+            );
         }
 
         return new BinaryFileResponse($receiptPath);
     }
-
 }

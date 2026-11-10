@@ -1,54 +1,207 @@
 
 {% extends 'base.html.twig' %}
 
-{% block title %}Edit Category{% endblock %}
+{% block title %}Edit Category | La Mia Pizzeria{% endblock %}
 
 {% block stylesheets %}
     {{ parent() }}
+
     <style>
-        .category-form-container {
-            max-width: 650px;
-            margin: 30px auto;
-            padding: 25px;
-            background: #fff;
-            color: #212529;
-            border-radius: 10px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        .category-edit-container {
+            max-width: 900px;
+            margin: 0 auto;
         }
 
-        .category-form-container label {
+        .category-edit-title {
+            color: #ffffff;
+            font-size: 32px;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        .category-edit-description {
+            color: #aaaaaa;
+            margin-bottom: 28px;
+        }
+
+        .category-edit-card {
+            background: #1b1b1b;
+            border: 1px solid #333333;
+            border-radius: 12px;
+            padding: 30px;
+        }
+
+        .category-edit-card label {
             display: block;
+            color: #ffffff;
             font-weight: 600;
             margin-bottom: 8px;
         }
 
-        .category-form-container input {
+        .category-edit-card input,
+        .category-edit-card select,
+        .category-edit-card textarea {
+            display: block;
             width: 100%;
+            box-sizing: border-box;
+            padding: 13px 14px;
+            background: #292929;
+            color: #ffffff;
+            border: 1px solid #484848;
+            border-radius: 6px;
+            font-size: 15px;
+        }
+
+        .category-edit-card input:focus,
+        .category-edit-card select:focus,
+        .category-edit-card textarea:focus {
+            background: #292929;
+            color: #ffffff;
+            border-color: #b91c1c;
+            outline: 2px solid #b91c1c;
+            outline-offset: 1px;
+            box-shadow: none;
+        }
+
+        .category-edit-card input::placeholder {
+            color: #999999;
+        }
+
+        .category-edit-card .form-control {
+            background: #292929;
+            color: #ffffff;
+            border-color: #484848;
+        }
+
+        .category-edit-card .form-control:focus {
+            background: #292929;
+            color: #ffffff;
+            border-color: #b91c1c;
+            box-shadow: none;
+        }
+
+        .category-edit-card .invalid-feedback,
+        .category-edit-card .form-error-message,
+        .category-edit-card .form-error-icon {
+            color: #f87171;
+        }
+
+        .category-edit-card form button[type="submit"] {
+            background: #b91c1c;
+            border: 1px solid #b91c1c;
+            color: #ffffff;
+            padding: 12px 24px;
+            border-radius: 6px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .category-edit-card form button[type="submit"]:hover {
+            background: #991b1b;
+            border-color: #991b1b;
+        }
+
+        .category-edit-back,
+        .category-edit-back:visited {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: #333333;
+            border: 1px solid #555555;
+            color: #ffffff;
+            padding: 12px 24px;
+            border-radius: 6px;
+            font-size: 15px;
+            font-weight: 600;
+            text-decoration: none !important;
+        }
+
+        .category-edit-back:hover {
+            background: #444444;
+            color: #ffffff;
+        }
+
+        .category-edit-divider {
+            border: 0;
+            border-top: 1px solid #383838;
+            margin: 28px 0 18px;
+        }
+
+        .category-edit-delete {
+            display: flex;
+            justify-content: flex-end;
+        }
+
+        .category-edit-delete form {
+            margin: 0;
+        }
+
+        .category-edit-delete form button {
+            background: #dc3545;
+            border: 1px solid #dc3545;
+            color: #ffffff;
+            border-radius: 6px;
+            padding: 10px 20px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .category-edit-delete form button:hover {
+            background: #b02a37;
+        }
+
+        @media (max-width: 650px) {
+            .category-edit-card {
+                padding: 20px;
+            }
         }
     </style>
 {% endblock %}
 
 {% block body %}
-    <div class="dashboard-container">
-        <main class="dashboard-content">
 
-            <div class="category-form-container">
-                <h1 class="mb-4">Edit Category</h1>
+<div class="dashboard-container">
+
+    <aside class="sidebar">
+        {% include 'sidebar/index.html.twig' %}
+    </aside>
+
+    <main class="dashboard-content">
+
+        <div class="category-edit-container">
+
+            <h1 class="category-edit-title">
+                Edit Category
+            </h1>
+
+            <p class="category-edit-description">
+                Update the information for {{ category.name }}.
+            </p>
+
+            <div class="category-edit-card">
 
                 {{ include('category/_form.html.twig', {
                     'button_label': 'Update Category'
                 }) }}
 
                 <a href="{{ path('app_category_index') }}"
-                   class="btn btn-secondary mt-3">
-                    Back to Categories
+                   class="category-edit-back mt-3">
+                    Cancel
                 </a>
 
-                <hr>
+                <hr class="category-edit-divider">
 
-                {{ include('category/_delete_form.html.twig') }}
+                <div class="category-edit-delete">
+                    {{ include('category/_delete_form.html.twig') }}
+                </div>
+
             </div>
 
-        </main>
-    </div>
+        </div>
+
+    </main>
+
+</div>
+
 {% endblock %}

@@ -26,6 +26,27 @@ class CheckoutController extends AbstractController
             $address = trim((string) $request->request->get('address', ''));
             $paymentMethod = trim((string) $request->request->get('paymentMethod', ''));
 
+            // Only Admin and Staff may create assisted or walk-in orders.
+            $canCreateAssistedOrder = $this->isGranted('ROLE_ADMIN')
+                || $this->isGranted('ROLE_STAFF');
+
+            $requestedOrderType = (string) $request->request->get('orderType', 'personal');
+
+            $orderType = in_array(
+                $requestedOrderType,
+                ['personal', 'staff_assisted', 'walk_in'],
+                true
+            ) ? $requestedOrderType : 'personal';
+
+            if ($orderType !== 'personal' && !$canCreateAssistedOrder) {
+                return new JsonResponse([
+                    'success' => false,
+                    'message' => 'You are not allowed to create this type of order.',
+                ], 403);
+            }
+
+            $isWalkIn = $orderType === 'walk_in';
+
             $itemsJson = $request->request->get('items', '');
             $items = json_decode($itemsJson, true);
 
@@ -50,7 +71,7 @@ class CheckoutController extends AbstractController
             if (
                 $name === '' ||
                 $phone === '' ||
-                $address === '' ||
+                (!$isWalkIn && $address === '') ||
                 !is_array($items) ||
                 count($items) === 0
             ) {
@@ -186,10 +207,14 @@ class CheckoutController extends AbstractController
             $order = new Order();
             $order->setCustomerName($name);
             $order->setCustomerPhone($phone);
-            $order->setCustomerAddress($address);
-            if ($this->getUser() instanceof \App\Entity\User) {
+            $order->setCustomerAddress($isWalkIn ? null : $address);
+            $order->setOrderType($orderType);
+
+            // Only personal orders belong to the logged-in user's order history.
+            if ($orderType === 'personal' && $this->getUser() instanceof User) {
                 $order->setUser($this->getUser());
             }
+
             $order->setStatus('Pending');
             $order->setPaymentMethod($paymentMethod);
             $order->setPaymentStatus('Pending');

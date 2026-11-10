@@ -1,0 +1,255 @@
+
+{% extends 'base.html.twig' %}
+
+{% block title %}Edit Account | La Mia Pizzeria{% endblock %}
+
+{% block body %}
+
+<style>
+    .admin-edit-page {
+        background: #111111;
+        color: #ffffff;
+        min-height: calc(100vh - 60px);
+        padding: 0;
+    }
+
+    .admin-edit-container {
+        max-width: 1000px;
+        margin: 0 auto;
+    }
+
+    .admin-edit-card {
+        background: #1b1b1b;
+        border: 1px solid #333333;
+        border-radius: 12px;
+        padding: 30px;
+    }
+
+    .admin-edit-title {
+        font-size: 30px;
+        margin: 0 0 10px;
+    }
+
+    .admin-edit-description {
+        color: #aaaaaa;
+        margin-bottom: 28px;
+    }
+
+    .admin-edit-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 24px;
+    }
+
+    .admin-edit-field label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: 600;
+        color: #ffffff;
+    }
+
+    .admin-edit-field input,
+    .admin-edit-field select {
+        display: block;
+        width: 100%;
+        box-sizing: border-box;
+        padding: 13px 14px;
+        background: #ffffff;
+        color: #111111;
+        border: 1px solid #555555;
+        border-radius: 6px;
+        font-size: 15px;
+    }
+
+    .admin-edit-field input:focus,
+    .admin-edit-field select:focus {
+        outline: 2px solid #b91c1c;
+        outline-offset: 1px;
+    }
+
+    .admin-edit-errors {
+        color: #f87171;
+        margin-top: 8px;
+        font-size: 14px;
+    }
+
+    .admin-edit-errors ul {
+        margin: 0;
+        padding-left: 18px;
+    }
+
+    .admin-edit-alert {
+        background: #7f1d1d;
+        border: 1px solid #ef4444;
+        border-radius: 6px;
+        padding: 14px;
+        margin-bottom: 22px;
+        color: #ffffff;
+    }
+
+    .admin-edit-actions {
+        display: flex;
+        justify-content: flex-end;
+        align-items: center;
+        gap: 18px;
+        margin-top: 30px;
+    }
+
+    .admin-edit-save {
+        background: #b91c1c;
+        color: #ffffff;
+        border: none;
+        border-radius: 6px;
+        padding: 13px 24px;
+        font-size: 15px;
+        font-weight: 600;
+        cursor: pointer;
+    }
+
+    .admin-edit-save:hover {
+        background: #991b1b;
+    }
+
+    .admin-edit-cancel,
+    .admin-edit-cancel:visited {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 13px 24px;
+        background: #333333;
+        color: #ffffff;
+        border: 1px solid #555555;
+        border-radius: 6px;
+        font-size: 15px;
+        font-weight: 600;
+        text-decoration: none !important;
+        transition: background-color 0.2s ease;
+    }
+
+    .admin-edit-cancel:hover,
+    .admin-edit-cancel:focus {
+        background: #444444;
+        color: #ffffff;
+        text-decoration: none !important;
+    }
+
+    @media (max-width: 650px) {
+        .admin-edit-card {
+            padding: 20px;
+        }
+
+        .admin-edit-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .admin-edit-actions {
+            justify-content: flex-start;
+            flex-wrap: wrap;
+        }
+    }
+</style>
+
+<div class="dashboard-container">
+
+    {# PERMANENT ADMIN SIDEBAR #}
+    <aside class="sidebar">
+        {% include 'sidebar/index.html.twig' %}
+    </aside>
+
+    {# MAIN CONTENT #}
+    <main class="dashboard-content">
+
+        <div class="admin-edit-page">
+
+            <div class="admin-edit-container">
+
+                <h1 class="admin-edit-title">
+                    Edit Account
+                </h1>
+
+                <p class="admin-edit-description">
+                    Update the account information for
+                    {{ user.firstName }} {{ user.lastName }}.
+                </p>
+
+                <div class="admin-edit-card">
+
+                    {% for message in app.flashes('error') %}
+                        <div class="admin-edit-alert">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+
+                    {{ form_start(form) }}
+
+                        <div class="admin-edit-errors">
+                            {{ form_errors(form) }}
+                        </div>
+
+                        <div class="admin-edit-grid">
+
+                            <div class="admin-edit-field">
+                                {{ form_label(form.firstName) }}
+                                {{ form_widget(form.firstName) }}
+
+                                <div class="admin-edit-errors">
+                                    {{ form_errors(form.firstName) }}
+                                </div>
+                            </div>
+
+                            <div class="admin-edit-field">
+                                {{ form_label(form.lastName) }}
+                                {{ form_widget(form.lastName) }}
+
+                                <div class="admin-edit-errors">
+                                    {{ form_errors(form.lastName) }}
+                                </div>
+                            </div>
+
+                            <div class="admin-edit-field">
+                                {{ form_label(form.email) }}
+                                {{ form_widget(form.email) }}
+
+                                <div class="admin-edit-errors">
+                                    {{ form_errors(form.email) }}
+                                </div>
+                            </div>
+
+                            <div class="admin-edit-field">
+                                {{ form_label(form.accountRole) }}
+                                {{ form_widget(form.accountRole) }}
+
+                                <div class="admin-edit-errors">
+                                    {{ form_errors(form.accountRole) }}
+                                </div>
+                            </div>
+
+                        </div>
+
+                        <div class="admin-edit-actions">
+
+                            <a href="{{ path('admin_users') }}"
+                               class="admin-edit-cancel">
+                                Cancel
+                            </a>
+
+                            <button type="submit"
+                                    class="admin-edit-save">
+                                Save Changes
+                            </button>
+
+                        </div>
+
+                    {{ form_end(form) }}
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </main>
+
+</div>
+
+{% endblock %}

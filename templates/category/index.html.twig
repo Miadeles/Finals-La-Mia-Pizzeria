@@ -1,83 +1,335 @@
 
 {% extends 'base.html.twig' %}
 
-{% block title %}Category index{% endblock %}
+{% block title %}Category Management | La Mia Pizzeria{% endblock %}
 
 {% block stylesheets %}
     {{ parent() }}
+
     <style>
-        .category-table th,
-        .category-table td {
-            vertical-align: middle;
-            white-space: nowrap;
+        /* CATEGORY MANAGEMENT PAGE */
+        .category-page {
+            width: 100%;
+            color: #ffffff;
         }
 
-        .action-btn {
-            width: 70px;
-            height: 32px;
+        /* PAGE HEADER */
+        .category-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 24px;
+            margin-bottom: 28px;
+        }
+
+        .category-heading {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .category-title {
+            color: #ffffff;
+            font-size: 32px;
+            font-weight: 600;
+            margin: 0 0 8px;
+        }
+
+        .category-description {
+            color: #aaaaaa;
+            font-size: 15px;
+            margin: 0;
+        }
+
+        /* CREATE CATEGORY BUTTON */
+        .category-create-btn,
+        .category-create-btn:visited {
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            padding: 0;
-            margin-right: 4px;
+            background: #b91c1c;
+            color: #ffffff;
+            padding: 13px 20px;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 600;
+            text-decoration: none;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+
+        .category-create-btn:hover,
+        .category-create-btn:focus {
+            background: #991b1b;
+            color: #ffffff;
+            text-decoration: none;
+        }
+
+        /* TABLE CONTAINER */
+        .category-table-wrapper {
+            width: 100%;
+            overflow-x: auto;
+            background: #1b1b1b;
+            border: 1px solid #333333;
+            border-radius: 10px;
+        }
+
+        /* CATEGORY TABLE */
+        .category-table {
+            width: 100%;
+            min-width: 550px;
+            border-collapse: collapse;
+            color: #ffffff;
+            font-size: 14px;
+            margin: 0;
+        }
+
+        .category-table thead {
+            background: #292929;
+        }
+
+        .category-table th {
+            padding: 16px;
+            text-align: left;
+            font-size: 14px;
+            font-weight: 600;
+            color: #ffffff;
+            border-bottom: 1px solid #333333;
+            white-space: nowrap;
+        }
+
+        .category-table td {
+            padding: 16px;
+            vertical-align: middle;
+            border-top: 1px solid #333333;
+            color: #ffffff;
+        }
+
+        .category-table tbody tr:hover {
+            background: #242424;
+        }
+
+        /* ACTION BUTTONS */
+        .category-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .category-action-btn,
+        .category-action-btn:visited {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 70px;
+            height: 36px;
+            padding: 0 12px;
+            border: none;
+            border-radius: 5px;
+            color: #ffffff;
+            font-size: 13px;
+            font-weight: 600;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        .category-action-btn:hover {
+            color: #ffffff;
+            text-decoration: none;
+        }
+
+        /* SHOW BUTTON */
+        .category-show-btn {
+            background: #334155;
+        }
+
+        .category-show-btn:hover {
+            background: #475569;
+        }
+
+        /* EDIT BUTTON */
+        .category-edit-btn {
+            background: #b91c1c;
+        }
+
+        .category-edit-btn:hover {
+            background: #991b1b;
+        }
+
+        /* DELETE FORM */
+        .category-actions form {
+            display: inline-flex;
+            align-items: center;
+            margin: 0;
+        }
+
+        .category-actions form button {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 70px;
+            height: 36px;
+            padding: 0 12px;
+            background: #7f1d1d;
+            color: #ffffff;
+            border: none;
+            border-radius: 5px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            margin: 0;
+        }
+
+        .category-actions form button:hover {
+            background: #991b1b;
+            color: #ffffff;
+        }
+
+        /* EMPTY TABLE */
+        .category-empty {
+            text-align: center;
+            color: #aaaaaa;
+            padding: 30px !important;
+        }
+
+        /* RESPONSIVE DESIGN */
+        @media (max-width: 650px) {
+            .category-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 16px;
+            }
+
+            .category-title {
+                font-size: 26px;
+            }
+
+            .category-create-btn {
+                width: 100%;
+            }
         }
     </style>
 {% endblock %}
 
 {% block body %}
-    <div class="dashboard-container">
 
-        <aside class="sidebar">
-            {% include 'sidebar/index.html.twig' %}
-        </aside>
+<div class="dashboard-container">
 
-        <main class="dashboard-content">
+    {# ADMIN SIDEBAR #}
+    <aside class="sidebar">
+        {% include 'sidebar/index.html.twig' %}
+    </aside>
 
-            <h1 class="mb-4">Category Management</h1>
+    {# MAIN CONTENT #}
+    <main class="dashboard-content">
 
-            <a href="{{ path('app_category_new') }}"
-               class="btn btn-primary mb-3">
-                Create New Category
-            </a>
+        <div class="category-page">
 
-            <div class="table-responsive">
-                <table class="table table-dark table-striped table-hover category-table">
+            {# PAGE HEADER #}
+            <div class="category-header">
+
+                <div class="category-heading">
+
+                    <h1 class="category-title">
+                        Category Management
+                    </h1>
+
+                    <p class="category-description">
+                        Manage the categories for your pizza products.
+                    </p>
+
+                </div>
+
+                <a href="{{ path('app_category_new') }}"
+                   class="category-create-btn">
+                    + Create New Category
+                </a>
+
+            </div>
+
+            {# SUCCESS MESSAGES #}
+            {% for message in app.flashes('success') %}
+                <div class="alert alert-success">
+                    {{ message }}
+                </div>
+            {% endfor %}
+
+            {# ERROR MESSAGES #}
+            {% for message in app.flashes('error') %}
+                <div class="alert alert-danger">
+                    {{ message }}
+                </div>
+            {% endfor %}
+
+            {# CATEGORY TABLE #}
+            <div class="category-table-wrapper">
+
+                <table class="category-table">
+
                     <thead>
                         <tr>
-                            <th>Id</th>
+                            <th>ID</th>
                             <th>Category Name</th>
                             <th>Actions</th>
                         </tr>
                     </thead>
 
                     <tbody>
-                    {% for category in categories %}
-                        <tr>
-                            <td>{{ category.id }}</td>
-                            <td>{{ category.name }}</td>
-                            <td>
-                                <a class="btn btn-sm btn-info action-btn"
-                                   href="{{ path('app_category_show', {'id': category.id}) }}">
-                                    Show
-                                </a>
 
-                                <a class="btn btn-sm btn-warning action-btn"
-                                   href="{{ path('app_category_edit', {'id': category.id}) }}">
-                                    Edit
-                                </a>
+                        {% for category in categories %}
 
-                                {{ include('category/_delete_form.html.twig') }}
-                            </td>
-                        </tr>
-                    {% else %}
-                        <tr>
-                            <td colspan="3">No records found.</td>
-                        </tr>
-                    {% endfor %}
+                            <tr>
+
+                                <td>
+                                    {{ category.id }}
+                                </td>
+
+                                <td>
+                                    {{ category.name }}
+                                </td>
+
+                                <td>
+
+                                    <div class="category-actions">
+
+                                        <a href="{{ path('app_category_show', {'id': category.id}) }}"
+                                           class="category-action-btn category-show-btn">
+                                            Show
+                                        </a>
+
+                                        <a href="{{ path('app_category_edit', {'id': category.id}) }}"
+                                           class="category-action-btn category-edit-btn">
+                                            Edit
+                                        </a>
+
+                                        {{ include('category/_delete_form.html.twig') }}
+
+                                    </div>
+
+                                </td>
+
+                            </tr>
+
+                        {% else %}
+
+                            <tr>
+                                <td colspan="3" class="category-empty">
+                                    No categories found.
+                                </td>
+                            </tr>
+
+                        {% endfor %}
+
                     </tbody>
+
                 </table>
+
             </div>
 
-        </main>
-    </div>
+        </div>
+
+    </main>
+
+</div>
+
 {% endblock %}

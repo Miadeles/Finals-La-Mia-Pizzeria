@@ -14,6 +14,58 @@
 
         {% block stylesheets %}
             <style>
+                .home-promo {
+                    width: 100%;
+                    max-width: 1200px;
+                    margin: 24px auto;
+                    border-radius: 16px;
+                    overflow: hidden;
+                }
+
+                .home-promo-image {
+                    display: block;
+                    width: 100%;
+                    height: auto;
+                    border-radius: 16px;
+                }
+
+                .home-promo a {
+                    display: block;
+                }
+
+                .sidebar-brand {
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    gap: 8px;
+                    padding: 0 8px 15px;
+                    margin-top: 12px;
+                }
+
+                .sidebar-logo {
+                    width: 130px;
+                    height: 90px;
+                    object-fit: contain;
+                    transform: scale(2.3);
+                    transform-origin: center;
+                    pointer-events: none;
+                }
+
+                .sidebar-brand-text {
+                    margin: 0;
+                    color: #ffffff;
+                    font-size: 16px;
+                    font-weight: 700;
+                    line-height: 1.2;
+                    text-align: center;
+                }
+
+                @media (max-width: 768px) {
+                    .home-promo {
+                        margin: 16px auto;
+                        border-radius: 10px;
+                    }
+                }
 
                 html.password-scroll-pending .dashboard-container {
                     visibility: hidden;
@@ -66,6 +118,8 @@
                     display: flex;
                     flex-direction: column;
                     gap: 6px;
+                    position: relative;
+                    z-index: 10;
                 }
 
                 .sidebar-buttons a {
@@ -99,7 +153,7 @@
                     color: #ffffff;
                     overflow-x: auto;
                 }
-                
+
             </style>
         {% endblock %}
 

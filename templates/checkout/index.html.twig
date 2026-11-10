@@ -19,6 +19,31 @@
         <section class="checkout-section">
             <form id="checkout-form" enctype="multipart/form-data">
 
+                {# ORDER TYPE: ADMIN AND STAFF ONLY #}
+                {% if is_granted('ROLE_ADMIN') or is_granted('ROLE_STAFF') %}
+                    <div class="checkout-card">
+                        <h2>Order Type</h2>
+
+                        <label for="order-type">
+                            How are you placing this order?
+                        </label>
+
+                        <select id="order-type" name="orderType">
+                            <option value="personal">Personal Order</option>
+                            <option value="staff_assisted">
+                                Phone / Message Order (For a Customer)
+                            </option>
+                            <option value="walk_in">
+                                Walk-in Order (In-store Customer)
+                            </option>
+                        </select>
+
+                        <p id="order-type-note" class="payment-note">
+                            This order will be placed under your own account.
+                        </p>
+                    </div>
+                {% endif %}
+
                 <div class="checkout-card">
                     <h2>Customer Information</h2>
 
@@ -42,14 +67,20 @@
                         required
                     >
 
-                    <label for="customer-address">Delivery Address</label>
-                    <textarea
-                        id="customer-address"
-                        name="address"
-                        autocomplete="street-address"
-                        rows="3"
-                        required
-                    >{{ user ? user.deliveryAddress|default('') : '' }}</textarea>
+                    <div id="customer-address-group">
+                        <label for="customer-address">Delivery Address</label>
+                        <textarea
+                            id="customer-address"
+                            name="address"
+                            autocomplete="street-address"
+                            rows="3"
+                            required
+                        >{{ user ? user.deliveryAddress|default('') : '' }}</textarea>
+                    </div>
+
+                    <p id="walk-in-address-note" class="payment-note" hidden>
+                        No delivery address is needed for an in-store order.
+                    </p>
 
                     {% if user %}
                         <p class="profile-shortcut">
@@ -66,7 +97,9 @@
 
                     <select id="payment-method" name="paymentMethod" required>
                         <option value="">-- Select Payment Method --</option>
-                        <option value="COD">Cash on Delivery (COD)</option>
+                        <option id="cash-payment-option" value="COD">
+                            Cash on Delivery (COD)
+                        </option>
                         <option value="GoTyme">GoTyme</option>
                         <option value="Bank Transfer">Bank Transfer</option>
                     </select>
@@ -95,8 +128,9 @@
                         <p><strong>Account Number:</strong> 1995-2006-2006</p>
 
                         <p class="payment-note">
-                            After completing your bank transfer, enter the sender's account name
-                            and payment reference number, then upload your payment receipt.
+                            After completing your bank transfer, enter the sender's
+                            account name and payment reference number, then
+                            upload your payment receipt.
                         </p>
                     </div>
 
@@ -136,7 +170,7 @@
 
                     <p class="payment-note">
                         Online payments will remain Pending until an
-                        administrator verifies the payment.
+                        administrator or staff member verifies the payment.
                     </p>
                 </div>
 
@@ -220,6 +254,10 @@
     font: inherit;
 }
 
+#customer-address-group[hidden],
+#walk-in-address-note[hidden] {
+    display: none;
+}
 
 .payment-details {
     margin-top: 22px;
@@ -325,6 +363,62 @@
         const totalElement = document.getElementById('checkout-total');
         const message = document.getElementById('checkout-message');
         const form = document.getElementById('checkout-form');
+        const orderType = document.getElementById('order-type');
+
+        const customerName = document.getElementById('customer-name');
+        const customerPhone = document.getElementById('customer-phone');
+        const customerAddress = document.getElementById('customer-address');
+        const addressGroup = document.getElementById('customer-address-group');
+        const walkInAddressNote = document.getElementById('walk-in-address-note');
+        const orderTypeNote = document.getElementById('order-type-note');
+        const cashPaymentOption = document.getElementById('cash-payment-option');
+
+        const originalName = customerName.value;
+        const originalPhone = customerPhone.value;
+        const originalAddress = customerAddress.value;
+
+        function updateOrderType() {
+            const type = orderType ? orderType.value : 'personal';
+            const isWalkIn = type === 'walk_in';
+            const isAssisted = type === 'staff_assisted';
+
+            addressGroup.hidden = isWalkIn;
+            walkInAddressNote.hidden = !isWalkIn;
+            customerAddress.required = !isWalkIn;
+            customerAddress.disabled = isWalkIn;
+
+            if (cashPaymentOption) {
+                cashPaymentOption.textContent = isWalkIn
+                    ? 'Cash (In-store)'
+                    : 'Cash on Delivery (COD)';
+            }
+
+            if (orderTypeNote) {
+                orderTypeNote.textContent = isWalkIn
+                    ? 'Enter the in-store customer details. A delivery address is not needed.'
+                    : isAssisted
+                        ? 'Enter the phone or message customer details below.'
+                        : 'This order will be placed under your own account.';
+            }
+        }
+
+        if (orderType) {
+            orderType.addEventListener('change', function () {
+                if (orderType.value === 'personal') {
+                    customerName.value = originalName;
+                    customerPhone.value = originalPhone;
+                    customerAddress.value = originalAddress;
+                } else {
+                    customerName.value = '';
+                    customerPhone.value = '';
+                    customerAddress.value = '';
+                }
+
+                updateOrderType();
+            });
+        }
+
+        updateOrderType();
 
         if (!itemsContainer || !totalElement || !form) {
             return;
@@ -504,6 +598,7 @@
                 localStorage.removeItem(CART_KEY);
 
                 form.reset();
+                updateOrderType();
                 updatePaymentDetails();
                 renderSummary();
 
