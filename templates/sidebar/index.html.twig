@@ -44,12 +44,11 @@
 
         {% endif %}
 
-
         {# MANAGE ORDERS: ADMIN AND STAFF #}
         {% if is_granted('ROLE_ADMIN') or is_granted('ROLE_STAFF') %}
 
             <a href="{{ path('admin_orders') }}"
-            class="{{ app.request.attributes.get('_route') starts with 'admin_order' ? 'active' : '' }}">
+               class="{{ app.request.attributes.get('_route') starts with 'admin_order' ? 'active' : '' }}">
                 Manage Orders
             </a>
 
@@ -92,6 +91,22 @@
             <a href="{{ path('app_profile') }}"
                class="{{ app.request.attributes.get('_route') == 'app_profile' ? 'active' : '' }}">
                 My Account
+            </a>
+
+        {% endif %}
+
+        {# LOGIN AND LOGOUT LINKS #}
+        {% if app.user %}
+
+            <a href="{{ path('app_logout') }}">
+                Logout
+            </a>
+
+        {% else %}
+
+            <a href="{{ path('app_login') }}"
+               class="{{ app.request.attributes.get('_route') == 'app_login' ? 'active' : '' }}">
+                Login
             </a>
 
         {% endif %}
